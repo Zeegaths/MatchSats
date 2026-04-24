@@ -1,228 +1,353 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
-  const [mounted, setMounted] = useState(false);
-
+// ── Matrix Rain ──────────────────────────────────────────────────────
+function MatrixRain() {
+  const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    setMounted(true);
+    const c = ref.current; if (!c) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    const resize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
+    resize(); window.addEventListener("resize", resize);
+    const chars = "アイウエカキ01⚡₿BTC10";
+    const cols = Math.floor(c.width / 18);
+    const drops = Array(cols).fill(1);
+    const draw = () => {
+      ctx.fillStyle = "rgba(14,14,14,0.07)"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = "rgba(202,253,0,0.055)"; ctx.font = "12px Courier New";
+      drops.forEach((y, i) => {
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 18, y * 18);
+        if (y * 18 > c.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      });
+    };
+    const id = setInterval(draw, 70);
+    return () => { clearInterval(id); window.removeEventListener("resize", resize); };
   }, []);
+  return <canvas ref={ref} style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }} />;
+}
+
+// ── Neural Sun ───────────────────────────────────────────────────────
+function NeuralSun({ size = 300 }: { size?: number }) {
+  return (
+    <div style={{ position: "relative", width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      {/* Orbital rings */}
+      <div style={{ position: "absolute", width: size, height: size, borderRadius: "50%", border: "1px dashed rgba(202,253,0,0.07)", animation: "nspin 40s linear infinite" }} />
+      <div style={{ position: "absolute", width: size * 0.83, height: size * 0.83, borderRadius: "50%", border: "1px solid rgba(202,253,0,0.05)", animation: "nspin 25s linear infinite reverse" }} />
+      {/* Glow ring */}
+      <div style={{ position: "absolute", width: size * 0.78, height: size * 0.78, borderRadius: "50%", boxShadow: "0 0 0 3px #cafd00, 0 0 35px 10px rgba(202,253,0,0.55), 0 0 90px 25px rgba(202,253,0,0.12)", animation: "nglow 2.5s ease-in-out infinite" }} />
+      {/* Inner sphere */}
+      <div style={{
+        width: size * 0.73, height: size * 0.73, borderRadius: "50%",
+        background: "radial-gradient(circle at 38% 38%, #181808, #060606)",
+        border: "1px solid rgba(202,253,0,0.08)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        position: "relative", zIndex: 2, overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "repeating-conic-gradient(rgba(202,253,0,0.025) 0deg 2deg, transparent 2deg 7deg)" }} />
+        <svg width={size * 0.22} height={size * 0.25} viewBox="0 0 44 50" fill="none" style={{ position: "relative", zIndex: 1 }}>
+          <path d="M26 4L8 28H22L16 46L38 20H24L26 4Z" fill="#cafd00" style={{ filter: "drop-shadow(0 0 10px rgba(202,253,0,0.9))" }} />
+        </svg>
+        <div style={{ position: "absolute", bottom: "11%", left: "50%", transform: "translateX(-50%)", background: "rgba(10,10,10,0.9)", border: "1px solid rgba(202,253,0,0.3)", borderRadius: 99, padding: "2px 9px", whiteSpace: "nowrap" }}>
+          <span style={{ color: "#cafd00", fontSize: 7, fontWeight: 700, letterSpacing: 1 }}>PULSE INTEGRITY: 99.98%</span>
+        </div>
+      </div>
+      {/* Ping rings */}
+      <div style={{ position: "absolute", width: size * 0.84, height: size * 0.84, borderRadius: "50%", border: "1px solid rgba(202,253,0,0.12)", animation: "nping 2.5s ease-out infinite" }} />
+      <div style={{ position: "absolute", width: size * 0.72, height: size * 0.72, borderRadius: "50%", border: "1px solid rgba(202,253,0,0.08)", animation: "nping 2.5s ease-out infinite 0.7s" }} />
+      {/* Floating labels */}
+      <div style={{ position: "absolute", top: "2%", right: "-2%", background: "rgba(18,18,14,0.93)", backdropFilter: "blur(8px)", border: "1px solid rgba(73,72,71,0.4)", borderRadius: 20, padding: "6px 12px", display: "flex", alignItems: "center", gap: 7, zIndex: 3, whiteSpace: "nowrap" }}>
+        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 6px #cafd00" }} />
+        <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>LIVE FLOW: 2.4 BTC/S</span>
+      </div>
+      <div style={{ position: "absolute", bottom: "10%", left: "-4%", background: "rgba(157,123,184,0.12)", backdropFilter: "blur(8px)", border: "1px solid rgba(157,123,184,0.25)", borderRadius: 20, padding: "6px 12px", display: "flex", alignItems: "center", gap: 7, zIndex: 3, whiteSpace: "nowrap" }}>
+        <span style={{ color: "#9d7bb8", fontSize: 11 }}>◈</span>
+        <span style={{ color: "#9d7bb8", fontSize: 10, fontWeight: 700 }}>ACTIVE NODES: 14,209</span>
+      </div>
+      <style>{`
+        @keyframes nspin{to{transform:rotate(360deg)}}
+        @keyframes nping{0%{transform:scale(1);opacity:0.4}100%{transform:scale(1.3);opacity:0}}
+        @keyframes nglow{0%,100%{box-shadow:0 0 0 3px #cafd00,0 0 35px 10px rgba(202,253,0,0.55),0 0 90px 25px rgba(202,253,0,0.12)}50%{box-shadow:0 0 0 3px #cafd00,0 0 55px 16px rgba(202,253,0,0.75),0 0 110px 35px rgba(202,253,0,0.2)}}
+        @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+        @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+      `}</style>
+    </div>
+  );
+}
+
+// ── Responsive hook ──────────────────────────────────────────────────
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 768);
+    check(); window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return mobile;
+}
+
+// ── Header ───────────────────────────────────────────────────────────
+function Header() {
+  const router = useRouter();
+  const mobile = useIsMobile();
+  return (
+    <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "rgba(14,14,14,0.88)", backdropFilter: "blur(16px)", borderBottom: "1px solid #111110", padding: mobile ? "0.9rem 1.25rem" : "1rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 15, letterSpacing: 2 }}>MATCHSATS</span>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        {!mobile && (
+          <button onClick={() => router.push("/matches")} style={{ padding: "9px 20px", borderRadius: 99, background: "transparent", border: "1px solid #222", color: "#555", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.18s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#222"; e.currentTarget.style.color = "#555"; }}
+          >VIEW NETWORK</button>
+        )}
+        <button onClick={() => router.push("/login")} style={{ padding: mobile ? "8px 16px" : "9px 22px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: 1, boxShadow: "0 0 20px rgba(202,253,0,0.2)" }}>
+          {mobile ? "SYNC" : "INITIALIZE SYNC"}
+        </button>
+      </div>
+    </header>
+  );
+}
+
+// ── Hero ─────────────────────────────────────────────────────────────
+function Hero() {
+  const router = useRouter();
+  const mobile = useIsMobile();
+  const orbSize = mobile ? 220 : 300;
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900/40 via-black to-black" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-400/10 rounded-full blur-[128px]" />
+    <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? "90px 20px 60px" : "100px 40px 60px", overflow: "hidden" }}>
+      <MatrixRain />
+      <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translate(-50%,-50%)", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(202,253,0,0.04) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 48 : 80, alignItems: "center", maxWidth: 1280, width: "100%" }}>
+        {/* Text */}
+        <div style={{ flex: 1, textAlign: mobile ? "center" : "left", animation: "fu 0.6s ease both" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(202,253,0,0.08)", border: "1px solid rgba(202,253,0,0.2)", borderRadius: 99, padding: "5px 14px", marginBottom: 28 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 6px #cafd00" }} />
+            <span style={{ color: "#cafd00", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>THE SEMANTIC PULSE.</span>
+          </div>
+
+          <h1 style={{ fontSize: mobile ? "clamp(52px, 16vw, 80px)" : "clamp(60px, 8vw, 108px)", fontWeight: 900, lineHeight: 1.0, margin: "0 0 0", textTransform: "uppercase" }}>MATCH.</h1>
+          <h1 style={{ fontSize: mobile ? "clamp(52px, 16vw, 80px)" : "clamp(60px, 8vw, 108px)", fontWeight: 900, lineHeight: 1.0, margin: "0 0 24px", textTransform: "uppercase" }}>
+            <span style={{ color: "#cafd00" }}>SATS</span>FIED!
+          </h1>
+
+          <p style={{ color: "#aaa", fontSize: mobile ? 15 : 17, lineHeight: 1.8, margin: "0 0 36px", maxWidth: mobile ? "100%" : 420 }}>
+            Match with your people. Commit with sats.<br />
+            <span style={{ color: "#666" }}>Show up or literally pay for it.</span>
+          </p>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: mobile ? "center" : "flex-start" }}>
+            <button onClick={() => router.push("/login")} style={{ padding: "15px 30px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2, boxShadow: "0 0 36px rgba(202,253,0,0.3)", textTransform: "uppercase", transition: "opacity 0.18s" }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+            >INITIALIZE SYNC</button>
+            <button onClick={() => router.push("/matches")} style={{ padding: "15px 30px", borderRadius: 99, background: "transparent", border: "1px solid #2a2a28", color: "#666", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: 2, transition: "all 0.2s", textTransform: "uppercase" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#666"; }}
+            >ENTER THE GRID</button>
+          </div>
+        </div>
+
+        {/* Orb */}
+        <div style={{ display: "flex", justifyContent: "center", flexShrink: 0, animation: "fu 0.8s ease both 0.15s" }}>
+          <NeuralSun size={orbSize} />
+        </div>
       </div>
+    </section>
+  );
+}
 
-      {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-8 py-6">
-        <div className="text-2xl font-bold tracking-[0.3em] text-cyan-400">MATCHSATS</div>
-        <nav className="hidden md:flex items-center gap-8 text-sm tracking-wider text-zinc-400">
-          <span className="hover:text-cyan-400 cursor-pointer transition-colors">SYNC</span>
-          <span className="hover:text-cyan-400 cursor-pointer transition-colors">NETWORK</span>
-          <span className="hover:text-cyan-400 cursor-pointer transition-colors">VAULT</span>
-        </nav>
-      </header>
+// ── Marquee ───────────────────────────────────────────────────────────
+function Marquee() {
+  const text = "THE GRID NEVER SLEEPS • LOCK SATS OR STAY HOME • NO GHOSTING ALLOWED • SHOW UP OR PAY UP • ";
+  return (
+    <div style={{ borderTop: "1px solid #111110", borderBottom: "1px solid #111110", overflow: "hidden", padding: "16px 0" }}>
+      <div style={{ display: "flex", animation: "marquee 28s linear infinite", width: "max-content" }}>
+        {[text, text, text].map((t, i) => (
+          <span key={i} style={{ color: "rgba(255,255,255,0.045)", fontWeight: 900, fontSize: "clamp(56px,9vw,110px)", letterSpacing: -3, textTransform: "uppercase", whiteSpace: "nowrap" }}>{t}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-      {/* Hero Section */}
-      <section className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
-        <h1 className="text-[12vw] leading-[0.8] font-bold tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 to-cyan-600 animate-pulse">
-          ENTER<br />THE<br />GRID
-        </h1>
-        
-        <p className="mt-8 text-2xl md:text-4xl font-light tracking-[0.2em] text-zinc-400">
-          THE<br /><span className="text-cyan-400">SEMANTIC</span><br />PULSE.
+// ── Bento ─────────────────────────────────────────────────────────────
+function BentoGrid() {
+  const mobile = useIsMobile();
+  return (
+    <section style={{ padding: mobile ? "48px 20px" : "64px 40px", maxWidth: 1280, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(3, 1fr)", gap: 14 }}>
+        {/* Stat — glass card */}
+        <div style={{
+          borderRadius: 24, padding: "36px", minHeight: 180,
+          background: "linear-gradient(135deg, #141412 60%, #1a1020 100%)",
+          border: "1px solid rgba(157,123,184,0.15)",
+          backdropFilter: "blur(20px)",
+          display: "flex", flexDirection: "column", justifyContent: "space-between",
+          position: "relative", overflow: "hidden",
+        }}>
+          {/* Purple glow top-right */}
+          <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "radial-gradient(circle, rgba(157,123,184,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
+          {/* Green glow bottom-left */}
+          <div style={{ position: "absolute", bottom: -20, left: -20, width: 100, height: 100, borderRadius: "50%", background: "radial-gradient(circle, rgba(202,253,0,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
+            <svg width="28" height="28" viewBox="0 0 36 36"><path d="M18 2L34 11V25L18 34L2 25V11L18 2Z" fill="none" stroke="#9d7bb8" strokeWidth="1.5"/><path d="M21 10L13 20H19L15 30L27 18H20L21 10Z" fill="#cafd00"/></svg>
+            <span style={{ color: "#9d7bb8", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>UPTIME VELOCITY</span>
+          </div>
+          <div style={{ position: "relative" }}>
+            <p style={{ color: "#cafd00", fontWeight: 900, fontSize: mobile ? 52 : 64, margin: "0 0 4px", lineHeight: 1, textShadow: "0 0 30px rgba(202,253,0,0.3)" }}>99.9%</p>
+            <p style={{ color: "#9d7bb8", fontSize: 11, margin: 0, letterSpacing: 1 }}>infrastructure pulse · stable</p>
+          </div>
+          {/* Glass shimmer line */}
+          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 1, background: "linear-gradient(90deg, transparent, rgba(157,123,184,0.3), transparent)" }} />
+        </div>
+
+        {/* Escrow */}
+        <div style={{ borderRadius: 24, background: "#141412", border: "1px solid #1e1e1c", padding: "36px" }}>
+          <h3 style={{ color: "#fff", fontWeight: 900, fontSize: 24, margin: "0 0 12px", textTransform: "uppercase", lineHeight: 1.1 }}>SOVEREIGN<br />ESCROW</h3>
+          <p style={{ color: "#bbb", fontSize: 14, lineHeight: 1.75, margin: "0 0 20px" }}>Both sides lock 2,100 sats. Show up, confirm, get refunded. Ghost — and they keep your sats.</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {["SHOW UP ✓", "GHOST = L"].map(t => (
+              <span key={t} style={{ border: "1px solid #3a3a38", borderRadius: 99, padding: "5px 12px", color: "#888", fontSize: 10, fontWeight: 700, letterSpacing: 1 }}>{t}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Ghost rate */}
+        <div style={{ borderRadius: 24, background: "#0e0e0e", border: "1px solid #1a1a18", padding: "36px" }}>
+          <p style={{ color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 3, margin: "0 0 12px" }}>GHOST RATE</p>
+          <p style={{ color: "#cafd00", fontWeight: 900, fontSize: mobile ? 52 : 60, margin: "0 0 8px", lineHeight: 1 }}>0%</p>
+          <p style={{ color: "#bbb", fontSize: 13, margin: 0, lineHeight: 1.6 }}>because sats don't care about your excuses.</p>
+        </div>
+
+        {/* Deep Sync — full width */}
+        <div style={{ borderRadius: 24, background: "#111110", border: "1px solid #1a1a18", padding: "36px", gridColumn: mobile ? "1" : "1 / span 3" } as React.CSSProperties}>
+          <h3 style={{ color: "#cafd00", fontWeight: 900, fontSize: 26, margin: "0 0 12px", textTransform: "uppercase" }}>DEEP SYNC AI</h3>
+          <p style={{ color: "#bbb", fontSize: 14, lineHeight: 1.75, margin: "0 0 20px", maxWidth: 560 }}>Our matching engine reads what you're building, what you need, and who's in the room — then gives you your top 3 with actual rationale. Not tags. Signal.</p>
+          <div style={{ maxWidth: 400, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ height: 6, background: "#1e1e1c", borderRadius: 99, overflow: "hidden" }}><div style={{ height: "100%", width: "75%", background: "#cafd00", borderRadius: 99, boxShadow: "0 0 8px rgba(202,253,0,0.35)" }} /></div>
+            <div style={{ height: 6, background: "#1e1e1c", borderRadius: 99, overflow: "hidden" }}><div style={{ height: "100%", width: "50%", background: "#9d7bb8", borderRadius: 99 }} /></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Personality Grid ──────────────────────────────────────────────────
+const PERSONALITIES = [
+  { tag: "THE BUILDER", headline: "Ships First.\nSlides Never.", sub: "3 PRs open, zero pitch decks. We found your people.", bg: "#0e0e0a", headColor: "#fff", subColor: "#bbb", tagColor: "#cafd00", tagBg: "rgba(202,253,0,0.12)", border: "rgba(202,253,0,0.3)", glow: "#cafd00", glass: true },
+  { tag: "THE INVESTOR", headline: "Behold the\nNeural Sun.", sub: "You fund things you don't fully understand. Bitcoin fixes this.", bg: "#0c0a10", headColor: "#fff", subColor: "#bbb", tagColor: "#9d7bb8", tagBg: "rgba(157,123,184,0.15)", border: "rgba(157,123,184,0.3)", glow: "#9d7bb8" },
+  { tag: "THE CONNECTOR", headline: "The Blood\nPact Protocol.", sub: "You know everyone. Lock sats or it doesn't count.", bg: "#100808", headColor: "#fff", subColor: "#bbb", tagColor: "#ff8080", tagBg: "rgba(255,68,68,0.12)", border: "rgba(255,68,68,0.25)", glow: "#ff4444" },
+  { tag: "THE RESEARCHER", headline: "Deep Sync\nor Die.", sub: "You read whitepapers for fun. We matched you with someone who ships them.", bg: "#0a0e06", headColor: "#fff", subColor: "#bbb", tagColor: "#cafd00", tagBg: "rgba(202,253,0,0.1)", border: "rgba(202,253,0,0.2)", glow: "#cafd00" },
+];
+
+function PersonalityGrid() {
+  const router = useRouter();
+  const mobile = useIsMobile();
+  return (
+    <section style={{ padding: mobile ? "48px 20px" : "64px 40px", maxWidth: 1280, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
+        <p style={{ color: "#555", fontSize: 11, fontWeight: 700, letterSpacing: 4, margin: "0 0 14px" }}>FIND YOUR PROTOCOL</p>
+        <h2 style={{ fontSize: mobile ? "clamp(30px,8vw,48px)" : "clamp(36px,5vw,64px)", fontWeight: 900, lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
+          What kind of node<br /><span style={{ color: "#cafd00" }}>are you?</span>
+        </h2>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(2, 1fr)", gap: 14 }}>
+        {PERSONALITIES.map((p, i) => (
+          <div key={p.tag} onClick={() => router.push("/login")} style={{
+            borderRadius: 24,
+            background: p.bg,
+            border: `1px solid ${p.border ?? "transparent"}`,
+            padding: "32px 28px",
+            position: "relative", overflow: "hidden", cursor: "pointer",
+            animation: "fu 0.5s ease both", animationDelay: `${i * 0.08}s`,
+            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+            boxShadow: `0 0 0 1px ${(p as any).glow ?? "#cafd00"}18, inset 0 0 60px rgba(0,0,0,0.4)`,
+            backdropFilter: "blur(20px)",
+          }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = `0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px ${(p as any).glow ?? "#cafd00"}40, 0 0 30px ${(p as any).glow ?? "#cafd00"}15`;
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = `0 0 0 1px ${(p as any).glow ?? "#cafd00"}18, inset 0 0 60px rgba(0,0,0,0.4)`;
+            }}
+          >
+            {/* Top edge color streak */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${(p as any).glow ?? "#cafd00"}, transparent)`, opacity: 0.6, pointerEvents: "none" }} />
+            {/* Corner glow */}
+            <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: `radial-gradient(circle, ${(p as any).glow ?? "#cafd00"}20 0%, transparent 70%)`, pointerEvents: "none" }} />
+            {/* Glass texture */}
+            {(p as any).glass && (
+              <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 10px)", pointerEvents: "none" }} />
+            )}
+            {/* Mini orb */}
+            <div style={{ position: "absolute", top: 20, right: 20, width: 70, height: 70, borderRadius: "50%", border: `1px solid ${p.tagColor}25`, boxShadow: `0 0 20px ${p.tagColor}18`, background: `radial-gradient(circle, ${p.tagColor}06 0%, transparent 70%)` }} />
+            <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, letterSpacing: 2, color: p.tagColor, background: p.tagBg, border: `1px solid ${p.tagColor}30`, padding: "4px 12px", borderRadius: 99, marginBottom: 18 }}>{p.tag}</span>
+            <h3 style={{ fontSize: "clamp(22px,3vw,30px)", fontWeight: 900, color: p.headColor, margin: "0 0 12px", lineHeight: 1.1, textTransform: "uppercase", whiteSpace: "pre-line" }}>{p.headline}</h3>
+            <p style={{ color: p.subColor, fontSize: 15, lineHeight: 1.7, margin: "0 0 24px" }}>{p.sub}</p>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${p.tagColor}15`, border: `1px solid ${p.tagColor}30`, borderRadius: 99, padding: "8px 16px" }}>
+              <span style={{ color: p.tagColor, fontWeight: 800, fontSize: 11, letterSpacing: 1 }}>ENTER THE GRID →</span>
+            </div>
+            <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: p.tagColor, boxShadow: `0 0 4px ${p.tagColor}` }} />
+              <span style={{ color: p.tagColor, fontSize: 9, fontWeight: 700, letterSpacing: 1, opacity: 0.85 }}>PULSE ACTIVE · 1,421 SYNCHRONIZED</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── CTA ───────────────────────────────────────────────────────────────
+function CTASection() {
+  const router = useRouter();
+  const mobile = useIsMobile();
+  const [ln, setLn] = useState("");
+  return (
+    <section style={{ padding: mobile ? "32px 20px 64px" : "40px 40px 80px", display: "flex", justifyContent: "center" }}>
+      <div style={{ maxWidth: 660, width: "100%", background: "#111110", border: "1px solid #1a1a18", borderRadius: 28, padding: mobile ? "36px 24px" : "60px 48px", position: "relative", overflow: "hidden", textAlign: "center" }}>
+        <div style={{ position: "absolute", top: 1, left: "15%", right: "15%", height: 1, background: "linear-gradient(90deg, transparent, #cafd00, transparent)" }} />
+        <div style={{ position: "absolute", top: -60, left: "50%", transform: "translateX(-50%)", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(202,253,0,0.04) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <h2 style={{ fontSize: mobile ? "clamp(26px,8vw,40px)" : "clamp(28px,5vw,50px)", fontWeight: 900, textTransform: "uppercase", margin: "0 0 14px", lineHeight: 1.05 }}>READY TO SYNC?</h2>
+        <p style={{ color: "#bbb", fontSize: 15, margin: "0 0 32px", lineHeight: 1.75 }}>
+          Built for Bitcoin Unconference.<br />Scan in, get matched, lock sats, meet people.
         </p>
-
-        <div className="mt-12 flex items-center gap-4 px-6 py-3 border border-cyan-500/30 rounded-full bg-cyan-950/20">
-          <span className="w-2 h-2 bg-cyan-400 rounded-full animate-ping" />
-          <span className="text-sm tracking-widest text-cyan-300">LIVE NETWORK FLOW: 2.4 BTC/S</span>
-        </div>
-
-        <p className="mt-6 max-w-xl text-zinc-500 text-sm leading-relaxed">
-          Real-time liquidity coordination driven by Deep Sync AI. Your capital, matched with sovereign precision.
-        </p>
-
-        <div className="mt-12 flex flex-col md:flex-row gap-4">
-          <button className="px-8 py-4 bg-cyan-500 text-black font-bold tracking-widest hover:bg-cyan-400 transition-all hover:scale-105">
-            INITIALIZE SYNC
-          </button>
-          <button className="px-8 py-4 border border-cyan-500/50 text-cyan-400 tracking-widest hover:bg-cyan-950/30 transition-all">
-            VIEW NETWORK
-          </button>
-        </div>
-      </section>
-
-      {/* Neural Sun Section */}
-      <section className="relative z-10 py-24 px-8 border-t border-zinc-800">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-bold tracking-wider mb-8">
-            BEHOLD THE <span className="text-cyan-400">NEURAL SUN</span>
-          </h2>
-          <p className="text-xl text-zinc-400 mb-12 max-w-2xl mx-auto">
-            Synchronize your frequency with the elite network. Real-time matching powered by biological intelligence.
-          </p>
-          <button className="px-8 py-4 border border-cyan-500 text-cyan-400 tracking-widest hover:bg-cyan-950/30 transition-all">
-            ENTER THE GRID
-          </button>
-
-          <div className="mt-16 flex items-center justify-center gap-2">
-            <span className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-            <span className="text-cyan-400 tracking-widest">PULSE ACTIVE: 1,421 SYNCHRONIZED</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Grid */}
-      <section className="relative z-10 py-16 px-8 bg-zinc-900/30">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-cyan-400">99.9%</div>
-            <div className="mt-2 text-xs tracking-widest text-zinc-500">UPTIME VELOCITY</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-cyan-400">IDENTITY</div>
-            <div className="mt-2 text-xs tracking-widest text-zinc-500">(LNURL)</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-cyan-400">VERIFIED</div>
-            <div className="mt-2 text-xs tracking-widest text-zinc-500">NODE PROTOCOL</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-cyan-400">SOVEREIGN</div>
-            <div className="mt-2 text-xs tracking-widest text-zinc-500">ESCROW</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="relative z-10 py-24 px-8">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
-          <div className="p-8 border border-zinc-800 bg-zinc-900/20">
-            <div className="w-12 h-12 border border-cyan-500 flex items-center justify-center mb-6">
-              <span className="text-cyan-400">⚡</span>
-            </div>
-            <h3 className="text-xl font-bold tracking-wider mb-4">DEEP SYNC AI</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Our neural matching engine predicts liquidity bottlenecks before they happen, optimizing your yield automatically.
-            </p>
-          </div>
-
-          <div className="p-8 border border-zinc-800 bg-zinc-900/20">
-            <div className="w-12 h-12 border border-cyan-500 flex items-center justify-center mb-6">
-              <span className="text-cyan-400">🔐</span>
-            </div>
-            <h3 className="text-xl font-bold tracking-wider mb-4">LIGHTNING ESCROW</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Multi-sig trustlessness baked into every transaction. You hold the keys, we provide the venue.
-            </p>
-          </div>
-
-          <div className="p-8 border border-zinc-800 bg-zinc-900/20">
-            <div className="w-12 h-12 border border-cyan-500 flex items-center justify-center mb-6">
-              <span className="text-cyan-400">🧠</span>
-            </div>
-            <h3 className="text-xl font-bold tracking-wider mb-4">NEURAL AUTH</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Advanced AI monitors the exchange, acting as a silent, digital judge for all grid interactions.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Neural Resonance */}
-      <section className="relative z-10 py-24 px-8 border-t border-zinc-800">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-bold tracking-wider mb-8">
-            <span className="text-cyan-400">NEURAL</span> RESONANCE
-          </h2>
-          <p className="text-xl text-zinc-400 mb-8 max-w-2xl mx-auto">
-            THE GRID NEVER SLEEPS • Matches aren&apos;t found; they are resonant frequencies discovered by our core. We bypass superficial data to align your core logic with the grid&apos;s elite nodes.
-          </p>
-          <div className="inline-flex items-center gap-4 px-6 py-3 border border-cyan-500/30">
-            <span className="text-sm tracking-widest">PATTERN ALPHA</span>
-            <span className="text-cyan-400">•</span>
-            <span className="text-sm tracking-widest">BIO-SYNC TECH</span>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="relative z-10 py-24 px-8 text-center">
-        <h2 className="text-5xl md:text-7xl font-bold tracking-wider mb-4">READY TO SYNC?</h2>
-        <p className="text-xl text-zinc-400 mb-12">Join the most advanced peer-to-peer liquidity network on the planet.</p>
-        
-        <div className="flex flex-col items-center gap-4 mb-12">
-          <div className="flex items-center gap-2 text-cyan-400">
-            <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-            <span className="text-sm tracking-widest">LATENCY ZERO</span>
-          </div>
-          <p className="text-zinc-500 text-sm">Instantaneous peer-to-peer connection via the Lightning Network infrastructure.</p>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
-          <input 
-            type="text" 
-            placeholder="Enter grid node address..."
-            className="w-full max-w-md px-6 py-4 bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:border-cyan-500 focus:outline-none"
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <input value={ln} onChange={e => setLn(e.target.value)} placeholder="your@lightning.address" style={{ background: "#1a1a18", border: "1px solid #2a2a28", borderRadius: 99, color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, padding: "13px 20px", outline: "none", width: mobile ? "100%" : 240, transition: "border-color 0.18s", boxSizing: "border-box" }}
+            onFocus={e => (e.target.style.borderColor = "#cafd0060")}
+            onBlur={e => (e.target.style.borderColor = "#2a2a28")}
           />
-          <button className="px-8 py-4 bg-cyan-500 text-black font-bold tracking-widest hover:bg-cyan-400 transition-all">
+          <button onClick={() => router.push("/login")} style={{ padding: "13px 26px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 28px rgba(202,253,0,0.25)", width: mobile ? "100%" : "auto" }}>
             CONNECT NODE
           </button>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        <div className="flex flex-col md:flex-row items-center justify-center gap-12">
-          <button className="text-3xl font-bold tracking-[0.2em] hover:text-cyan-400 transition-colors">SYMMETRY</button>
-          <button className="text-3xl font-bold tracking-[0.2em] hover:text-cyan-400 transition-colors">INITIATE</button>
-          <button className="text-3xl font-bold tracking-[0.2em] hover:text-cyan-400 transition-colors">HANDSHAKE</button>
-        </div>
-      </section>
-
-      {/* Blood Pact */}
-      <section className="relative z-10 py-16 px-8 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
-          <div>
-            <h3 className="text-cyan-400 tracking-widest mb-4">IMMUTABLE TRUST</h3>
-            <p className="text-zinc-500 text-sm">
-              Collateralized satoshis ensure every interaction is backed by skin in the game. No fakes. No ghosts.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-cyan-400 tracking-widest mb-4">INSTANT SETTLEMENT</h3>
-            <p className="text-zinc-500 text-sm">
-              Transactions resolve at the speed of light. Your value is unlocked as soon as the pact is honored.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-cyan-400 tracking-widest mb-4">WATCH RESONANCE</h3>
-            <p className="text-zinc-500 text-sm">
-              ARE YOU COMPATIBLE? Multi-sig trustlessness baked into every transaction.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 py-12 px-8 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="text-2xl font-bold tracking-[0.3em] text-cyan-400">MATCHSATS</div>
-          
-          <div className="flex items-center gap-8 text-sm tracking-wider text-zinc-500">
-            <span className="hover:text-cyan-400 cursor-pointer">Terms</span>
-            <span className="hover:text-cyan-400 cursor-pointer">Privacy</span>
-            <span className="hover:text-cyan-400 cursor-pointer">Docs</span>
-            <span className="hover:text-cyan-400 cursor-pointer">API</span>
-          </div>
-
-          <div className="text-zinc-600 text-sm">
-            © 2024 MatchSats. Powering the Pulse.
-          </div>
-        </div>
+// ── Root ──────────────────────────────────────────────────────────────
+export default function LandingPage() {
+  const mobile = useIsMobile();
+  return (
+    <div style={{ background: "#0e0e0e", minHeight: "100vh", color: "#fff", fontFamily: "'Space Grotesk', sans-serif" }}>
+      <Header />
+      <Hero />
+      <Marquee />
+      <BentoGrid />
+      <PersonalityGrid />
+      <CTASection />
+      <footer style={{ borderTop: "1px solid #1a1a18", padding: mobile ? "24px 20px" : "28px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 14, letterSpacing: 2 }}>MATCHSATS</span>
+        <span style={{ color: "#aaa", fontSize: 12 }}>built in africa, for africa · powered by lightning ⚡</span>
+        <span style={{ color: "#666", fontSize: 11, fontFamily: "monospace" }}>v0.1.0-alpha</span>
       </footer>
     </div>
   );

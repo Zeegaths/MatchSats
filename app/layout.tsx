@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MatchSats | AI Matchmaking + Lightning Escrow",
-  description: "AI matchmaking + Lightning escrow for conferences. No account. No flaking.",
+  title: "MatchSats | Powering the Pulse",
+  description: "Match with your people. Commit with Sats. Meet for real.",
 };
 
 export default function RootLayout({
@@ -24,7 +24,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="bg-black text-white antialiased">{children}</body>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+      </head>
+      <body className="bg-[#0e0e0e] text-white antialiased" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }
