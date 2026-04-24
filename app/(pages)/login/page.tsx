@@ -13,11 +13,11 @@ const WALLET_OPTIONS = [
 ];
 
 const BOOT_LINES = [
-  { text: "scanning for humans worth talking to...", delay: 0 },
-  { text: "detected 3 VCs nearby. deploying politeness shield 🛡️", delay: 500, color: "#ff8c42" },
-  { text: "vibe check: BUILDER ✓  ghost probability: LOW ✓", delay: 1000, color: "#cafd00" },
-  { text: "identity: UNVERIFIED (you look a little sus ngl)", delay: 1500, color: "#9d7bb8" },
-  { text: "ok fine. prove you're real. scan your wallet 👇", delay: 1950, color: "#cafd00" },
+  { text: "detected 3 VCs nearby. deploying politeness shield 🛡️", delay: 0, color: "#ff8c42" },
+  { text: "scanning for people who actually ship things...", delay: 600 },
+  { text: "ghost probability: LOW ✓  vibe check: PASSED ✓", delay: 1100, color: "#cafd00" },
+  { text: "warning: free coffee detected 40m away. stay focused.", delay: 1600, color: "#ff8c42" },
+  { text: "ok you're one of the good ones. scan your wallet 👇", delay: 2050, color: "#cafd00" },
 ];
 
 type Step = "boot" | "scan" | "connecting" | "done";
@@ -51,10 +51,11 @@ export default function LoginPage() {
   const [showWallets, setShowWallets] = useState(false);
   const [progress, setProgress] = useState(0);
   const termRef = useRef<HTMLDivElement>(null);
+  const bootedRef = useRef(false);
 
-  // Boot sequence
   useEffect(() => {
-    if (step !== "boot") return;
+    if (step !== "boot" || bootedRef.current) return;
+    bootedRef.current = true;
     const cursorId = setInterval(() => setCursor(c => !c), 530);
     BOOT_LINES.forEach(line => {
       setTimeout(() => {
@@ -66,7 +67,6 @@ export default function LoginPage() {
     return () => clearInterval(cursorId);
   }, []);
 
-  // Progress bar
   useEffect(() => {
     if (step !== "connecting") return;
     const id = setInterval(() => {
@@ -91,9 +91,9 @@ export default function LoginPage() {
         <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 15, letterSpacing: 2 }}>MATCHSATS</span>
         {step !== "boot" && (
           <button onClick={() => router.push("/matches")} style={{
-            background: "none", border: "none", color: "#444",
+            background: "none", border: "none", color: "#777",
             fontFamily: "'Space Grotesk', sans-serif", fontSize: 13,
-            cursor: "pointer", textDecoration: "underline", textDecorationColor: "#222",
+            cursor: "pointer", textDecoration: "underline", textDecorationColor: "#444",
           }}>explore first →</button>
         )}
       </div>
@@ -103,26 +103,36 @@ export default function LoginPage() {
 
         {/* BOOT */}
         {step === "boot" && (
-          <div style={{ width: "100%", maxWidth: 500 }}>
-            <div ref={termRef} style={{
-              background: "#060606", border: "1px solid #1a1a18", borderRadius: 18,
-              padding: "20px 24px", fontFamily: "'Courier New', monospace",
-              fontSize: 13, lineHeight: 2, maxHeight: 260, overflowY: "auto", scrollbarWidth: "none",
-            }}>
-              <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-                {["#ff5f57","#ffbd2e","#28c840"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />)}
-                <span style={{ color: "#222", fontSize: 11, marginLeft: 8, letterSpacing: 1 }}>matchsats — social_sync</span>
-              </div>
+          <div style={{ width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", alignItems: "center", gap: 48 }}>
+            {/* Orb */}
+            <div style={{ position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {[1,2,3].map(i => (
+                <div key={i} style={{ position: "absolute", width: 28+i*16, height: 28+i*16, borderRadius: "50%", border: "1px solid #cafd00", opacity: 0.08/i, animation: `lp ${1+i*0.5}s ease-in-out infinite` }} />
+              ))}
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#cafd0018", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: "0 0 24px rgba(202,253,0,0.35)" }}>⚡</div>
+            </div>
+
+            {/* Messages */}
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16, minHeight: 160 }}>
               {bootLines.map((line, i) => (
-                <div key={i} style={{ display: "flex", gap: 10 }}>
-                  <span style={{ color: "#9d7bb8", flexShrink: 0 }}>›</span>
-                  <span style={{ color: line.color ?? "#4d7a4d" }}>{line.text}</span>
+                <div key={i} style={{
+                  display: "flex", alignItems: "flex-start", gap: 12,
+                  animation: "fadeUp 0.4s ease both",
+                }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: line.color ?? "#cafd00", flexShrink: 0, marginTop: 6, boxShadow: `0 0 6px ${line.color ?? "#cafd00"}` }} />
+                  <p style={{ color: line.color ?? "#aaa", fontSize: 15, fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{line.text}</p>
                 </div>
               ))}
-              <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 2 }}>
-                <span style={{ color: "#9d7bb8" }}>›</span>
-                <span style={{ display: "inline-block", width: 8, height: 14, background: "#cafd00", opacity: cursor ? 1 : 0, transition: "opacity 0.1s" }} />
-              </div>
+              {bootLines.length < 5 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#333", flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ display: "flex", gap: 5 }}>
+                    {[0,1,2].map(i => (
+                      <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#333", animation: `dot 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -130,7 +140,7 @@ export default function LoginPage() {
         {/* SCAN */}
         {step === "scan" && (
           <div style={{ width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <p style={{ color: "#333", fontSize: 11, fontWeight: 700, letterSpacing: 3, margin: "0 0 22px" }}>LNURL — AUTH</p>
+            <p style={{ color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 3, margin: "0 0 22px" }}>SCAN TO SIGN IN</p>
             <h1 style={{ fontSize: "clamp(28px, 8vw, 48px)", fontWeight: 900, textAlign: "center", lineHeight: 1.05, margin: "0 0 6px" }}>Welcome to</h1>
             <h1 style={{ fontSize: "clamp(28px, 8vw, 48px)", fontWeight: 900, textAlign: "center", color: "#cafd00", margin: "0 0 32px" }}>the Network.</h1>
 
@@ -141,11 +151,11 @@ export default function LoginPage() {
               boxSizing: "border-box",
             }}>
               <QRCode />
-              <p style={{ color: "#444", fontSize: 13, margin: 0, textAlign: "center" }}>Scan with your Lightning wallet</p>
+              <p style={{ color: "#aaa", fontSize: 13, margin: 0, textAlign: "center" }}>Scan with your Lightning wallet</p>
               <div style={{ display: "flex", alignItems: "center", gap: 12, width: "100%" }}>
-                <div style={{ flex: 1, height: 1, background: "#1e1e1c" }} />
-                <span style={{ color: "#222", fontSize: 11, letterSpacing: 2 }}>OR</span>
-                <div style={{ flex: 1, height: 1, background: "#1e1e1c" }} />
+                <div style={{ flex: 1, height: 1, background: "#2a2a28" }} />
+                <span style={{ color: "#555", fontSize: 11, letterSpacing: 2 }}>OR</span>
+                <div style={{ flex: 1, height: 1, background: "#2a2a28" }} />
               </div>
 
               {!showWallets ? (
@@ -157,27 +167,30 @@ export default function LoginPage() {
                 }}>CONNECT WALLET ⚡</button>
               ) : (
                 <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <p style={{ color: "#333", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: "0 0 4px" }}>CHOOSE YOUR WEAPON</p>
+                  <p style={{ color: "#888", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: "0 0 4px" }}>PICK YOUR WALLET</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     {WALLET_OPTIONS.map(w => (
                       <button key={w.id} onClick={connectWallet} style={{
-                        padding: "10px 14px", borderRadius: 12, border: "1px solid #1e1e1c",
-                        background: "#0e0e0e", color: "#888", fontFamily: "'Space Grotesk', sans-serif",
+                        padding: "10px 14px", borderRadius: 12, border: "1px solid #2a2a28",
+                        background: "#0e0e0e", color: "#aaa", fontFamily: "'Space Grotesk', sans-serif",
                         fontWeight: 600, fontSize: 13, cursor: "pointer",
                         display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s",
                       }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#cafd0040"; e.currentTarget.style.color = "#cafd00"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e1c"; e.currentTarget.style.color = "#888"; }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#cafd0060"; e.currentTarget.style.color = "#cafd00"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#aaa"; }}
                       >
                         <span>{w.icon}</span><span>{w.name}</span>
                       </button>
                     ))}
                   </div>
-                  <button onClick={() => setShowWallets(false)} style={{ background: "none", border: "none", color: "#333", fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, cursor: "pointer", marginTop: 4 }}>← back</button>
+                  <button onClick={() => setShowWallets(false)} style={{
+                    background: "none", border: "none", color: "#666",
+                    fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, cursor: "pointer", marginTop: 4,
+                  }}>← back</button>
                 </div>
               )}
             </div>
-            <p style={{ color: "#1a1a18", fontSize: 11, textAlign: "center" }}>no email · no password · no nonsense</p>
+            <p style={{ color: "#555", fontSize: 11, textAlign: "center" }}>no email · no password · just your wallet</p>
           </div>
         )}
 
@@ -192,14 +205,18 @@ export default function LoginPage() {
             </div>
             <div style={{ textAlign: "center" }}>
               <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 8px" }}>Authenticating</h2>
-              <p style={{ color: "#555", fontSize: 14, margin: 0 }}>
-                {progress < 35 ? "shaking hands with your wallet..." : progress < 70 ? "verifying you're not a bot 🤖" : "almost there, hold tight ⚡"}
+              <p style={{ color: "#aaa", fontSize: 14, margin: 0 }}>
+              {progress < 35 ? "shaking hands with your wallet..." : progress < 70 ? "making sure you're not a robot 🤖" : "almost in, hold tight ⚡"}
               </p>
             </div>
             <div style={{ width: "100%", background: "#1a1a18", borderRadius: 99, height: 4, overflow: "hidden" }}>
               <div style={{ height: "100%", borderRadius: 99, background: "#cafd00", width: `${progress}%`, transition: "width 0.08s linear", boxShadow: "0 0 10px rgba(202,253,0,0.5)" }} />
             </div>
-            <style>{`@keyframes lp{0%,100%{transform:scale(1);opacity:0.06}50%{transform:scale(1.1);opacity:0.15}}`}</style>
+            <style>{`
+              @keyframes lp{0%,100%{transform:scale(1);opacity:0.06}50%{transform:scale(1.1);opacity:0.15}}
+              @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+              @keyframes dot{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+            `}</style>
           </div>
         )}
 
@@ -210,7 +227,7 @@ export default function LoginPage() {
             <div style={{ textAlign: "center" }}>
               <h2 style={{ fontSize: "clamp(26px, 7vw, 38px)", fontWeight: 900, margin: "0 0 8px" }}>you're in.</h2>
               <p style={{ color: "#cafd00", fontSize: 14, fontWeight: 700, margin: "0 0 6px" }}>identity verified</p>
-              <p style={{ color: "#444", fontSize: 13, margin: 0 }}>don't ghost anyone. sats are watching. 👀</p>
+              <p style={{ color: "#aaa", fontSize: 13, margin: 0 }}>don't ghost anyone. sats are watching. 👀</p>
             </div>
             <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
               <button onClick={() => router.push("/profile")} style={{
@@ -221,11 +238,11 @@ export default function LoginPage() {
               }}>INITIALIZE SYNC →</button>
               <button onClick={() => router.push("/matches")} style={{
                 width: "100%", padding: "14px", borderRadius: 99, background: "transparent",
-                border: "1px solid #222", color: "#444", fontFamily: "'Space Grotesk', sans-serif",
+                border: "1px solid #333", color: "#888", fontFamily: "'Space Grotesk', sans-serif",
                 fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "all 0.18s",
               }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#888"; e.currentTarget.style.borderColor = "#444"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "#444"; e.currentTarget.style.borderColor = "#222"; }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#ccc"; e.currentTarget.style.borderColor = "#555"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "#888"; e.currentTarget.style.borderColor = "#333"; }}
               >just let me in already</button>
             </div>
           </div>
