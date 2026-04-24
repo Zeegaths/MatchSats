@@ -29,7 +29,7 @@ const CORE_VIBES = [
 ];
 
 const PERSONALITY_AXES = [
-  { left: "I RECHARGE ALONE", right: "I RECHARGE WITH PEOPLE", default: 60 },
+  { left: "INTROVERT", right: "EXTROVERT", default: 60 },
   { left: "I GO DEEP ON ONE THING", right: "I JUGGLE MANY THINGS", default: 35 },
   { left: "I FIGURE THINGS OUT", right: "I FIND WHAT ALREADY WORKS", default: 50 },
   { left: "I BET BIG, MOVE FAST", right: "I MEASURE, THEN MOVE", default: 45 },
