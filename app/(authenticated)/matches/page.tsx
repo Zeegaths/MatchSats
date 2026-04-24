@@ -105,6 +105,18 @@ function ActiveMeetingRow({ match }: { match: typeof MATCHES[0] }) {
 
       {/* CTA */}
       <button
+        onClick={() => router.push(`/matches/${match.id}/dm`)}
+        style={{
+          padding: "7px 12px", borderRadius: 99, flexShrink: 0,
+          background: "transparent", border: "1px solid #1e1e1c",
+          color: "#666", fontFamily: "'Space Grotesk', sans-serif",
+          fontWeight: 700, fontSize: 10, cursor: "pointer",
+          letterSpacing: 1, transition: "all 0.18s", whiteSpace: "nowrap",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "#9d7bb860"; e.currentTarget.style.color = "#9d7bb8"; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e1c"; e.currentTarget.style.color = "#666"; }}
+      >MSG</button>
+      <button
         onClick={() => router.push(`/matches/${match.id}/review`)}
         style={{
           padding: "8px 14px", borderRadius: 99, flexShrink: 0,
@@ -227,18 +239,18 @@ function MatchCard({ match, focused }: { match: typeof MATCHES[0]; focused: bool
           style={{
             flex: 1, padding: "10px", borderRadius: 99,
             background: isActive ? (isLocked ? "#9d7bb8" : "#cafd00") : "transparent",
-            border: isActive ? "none" : "1px solid #cafd0040",
-            color: isActive ? (isLocked ? "#fff" : "#1a2200") : "#cafd00",
+            border: isActive ? "none" : "1px solid #2a2a28",
+            color: isActive ? (isLocked ? "#fff" : "#1a2200") : "#aaa",
             fontFamily: "'Space Grotesk', sans-serif",
             fontWeight: 800, fontSize: 11, cursor: "pointer",
             letterSpacing: 1.5, textTransform: "uppercase",
             boxShadow: isActive ? (isLocked ? "0 0 20px rgba(157,123,184,0.25)" : "0 0 20px rgba(202,253,0,0.2)") : "none",
-            transition: "opacity 0.18s",
+            transition: "all 0.18s",
           }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
-          onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; if (!isActive) { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; } }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; if (!isActive) { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#aaa"; } }}
         >
-          {match.status === "meet-now" ? "✓ Confirm Meeting" : match.status === "both-locked" ? "Review Session" : "Lock Sats ⚡"}
+          {match.status === "meet-now" ? "✓ Confirm Meeting" : match.status === "both-locked" ? "Review Session" : "View →"}
         </button>
       </div>
     </div>

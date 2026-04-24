@@ -417,14 +417,16 @@ export default function MatchDetailPage({ params }: { params: { id: string } }) 
         }}>
           <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", gap: 10 }}>
             <button
-              onClick={() => {}}
+              onClick={() => router.push(`/matches/${match.id}/dm`)}
               style={{
                 flex: "0 0 auto", padding: "15px 22px", borderRadius: 99,
-                background: "transparent", border: "1px solid #222220",
-                color: "#555", fontFamily: "'Space Grotesk', sans-serif",
+                background: "transparent", border: "1px solid #1e1e1c",
+                color: "#666", fontFamily: "'Space Grotesk', sans-serif",
                 fontWeight: 700, fontSize: 12, cursor: "pointer",
-                letterSpacing: 1,
+                letterSpacing: 1, transition: "all 0.18s",
               }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#9d7bb860"; e.currentTarget.style.color = "#9d7bb8"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e1c"; e.currentTarget.style.color = "#666"; }}
             >
               MESSAGE
             </button>
@@ -441,8 +443,8 @@ export default function MatchDetailPage({ params }: { params: { id: string } }) 
                 boxShadow: isActive ? "0 0 30px rgba(202,253,0,0.3)" : "none",
                 transition: "opacity 0.18s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "0.88")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
             >
               {match.status === "meet-now"
                 ? "Confirm Attendance"
@@ -450,6 +452,42 @@ export default function MatchDetailPage({ params }: { params: { id: string } }) 
                 ? "Confirm Attendance"
                 : lockStep === "idle" ? "Lock Sats ⚡" : "Continue →"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* After locked — message still accessible */}
+      {lockStep === "locked" && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          padding: "1rem 1.5rem 2rem",
+          background: "linear-gradient(to top, #0e0e0e 60%, transparent)",
+        }}>
+          <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", gap: 10 }}>
+            <button
+              onClick={() => router.push(`/matches/${match.id}/dm`)}
+              style={{
+                flex: 1, padding: "15px", borderRadius: 99,
+                background: "transparent", border: "1px solid #9d7bb840",
+                color: "#9d7bb8", fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 700, fontSize: 14, cursor: "pointer",
+                letterSpacing: 1, transition: "all 0.18s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#9d7bb810"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+            >MESSAGE ◈</button>
+            <button
+              onClick={() => router.push(`/matches/${match.id}/review`)}
+              style={{
+                flex: 1, padding: "15px", borderRadius: 99,
+                background: "transparent", border: "1px solid #cafd0040",
+                color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 700, fontSize: 14, cursor: "pointer",
+                letterSpacing: 1, transition: "all 0.18s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#cafd0010"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+            >VIEW ESCROW ⚡</button>
           </div>
         </div>
       )}
