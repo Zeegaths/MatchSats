@@ -99,7 +99,7 @@ function ActiveMeetingRow({ match }: { match: typeof MATCHES[0] }) {
       {timer && (
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <p style={{ color: cfg.color, fontWeight: 700, fontSize: 13, fontVariantNumeric: "tabular-nums", margin: 0 }}>{timer}</p>
-          <p style={{ color: "#666", fontSize: 8, letterSpacing: 1, margin: 0, fontWeight: 700 }}>LEFT</p>
+          <p style={{ color: "#888", fontSize: 8, letterSpacing: 1, margin: 0, fontWeight: 700 }}>LEFT</p>
         </div>
       )}
 
@@ -156,46 +156,47 @@ function MatchCard({ match, focused }: { match: typeof MATCHES[0]; focused: bool
     >
       {/* Top stripe for active */}
       {isActive && (
-        <div style={{ height: 2, background: isLocked ? "linear-gradient(90deg, #9d7bb8, #9d7bb840)" : "linear-gradient(90deg, #cafd00, #cafd0040)" }} />
+        <div style={{ height: 3, background: isLocked ? "linear-gradient(90deg, #9d7bb8, #9d7bb840)" : "linear-gradient(90deg, #cafd00, #cafd0040)" }} />
       )}
 
       <div style={{ padding: "18px 18px 14px", display: "flex", gap: 14, alignItems: "flex-start" }}>
         {/* Avatar */}
         <div style={{
-          width: 46, height: 46, borderRadius: "50%", flexShrink: 0,
-          background: isLocked ? "#9d7bb820" : "#cafd0015",
-          border: `1.5px solid ${isLocked ? "#9d7bb840" : "#cafd0030"}`,
+          width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
+          background: isLocked ? "#9d7bb825" : "#cafd0018",
+          border: `2px solid ${isLocked ? "#9d7bb860" : "#cafd0050"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          color: isLocked ? "#9d7bb8" : "#cafd00", fontWeight: 800, fontSize: 17,
+          color: isLocked ? "#c4a0e8" : "#cafd00", fontWeight: 800, fontSize: 18,
+          boxShadow: `0 0 16px ${isLocked ? "rgba(157,123,184,0.2)" : "rgba(202,253,0,0.12)"}`,
         }}>{match.initials}</div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
-            <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>{match.name}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+            <span style={{ color: "#fff", fontWeight: 700, fontSize: 17 }}>{match.name}</span>
             {match.sats && (
               <span style={{
-                background: "#cafd0012", border: "1px solid #cafd0030",
+                background: "#cafd0015", border: "1px solid #cafd0040",
                 color: "#cafd00", fontSize: 10, fontWeight: 700,
-                padding: "2px 9px", borderRadius: 99, letterSpacing: 1,
+                padding: "3px 10px", borderRadius: 99, letterSpacing: 1,
               }}>⚡ {match.sats.toLocaleString()}</span>
             )}
             {isLocked && (
               <span style={{
-                background: "#9d7bb815", border: "1px solid #9d7bb840",
-                color: "#9d7bb8", fontSize: 9, fontWeight: 700,
-                padding: "2px 9px", borderRadius: 99, letterSpacing: 1,
+                background: "#9d7bb820", border: "1px solid #9d7bb860",
+                color: "#c4a0e8", fontSize: 9, fontWeight: 700,
+                padding: "3px 10px", borderRadius: 99, letterSpacing: 1,
               }}>LOCKED</span>
             )}
           </div>
-          <p style={{ color: "#888", fontSize: 12, margin: 0 }}>{match.role} · {match.location}</p>
+          <p style={{ color: "#bbb", fontSize: 13, margin: 0, fontWeight: 500 }}>{match.role} · {match.location}</p>
         </div>
 
         {/* Score */}
         <div style={{ textAlign: "center", flexShrink: 0 }}>
-          <div style={{ color: scoreColor, fontWeight: 900, fontSize: 24, lineHeight: 1, textShadow: match.matchScore >= 90 ? "0 0 12px rgba(202,253,0,0.4)" : match.matchScore >= 80 ? "0 0 12px rgba(157,123,184,0.4)" : "none" }}>
+          <div style={{ color: scoreColor, fontWeight: 900, fontSize: 26, lineHeight: 1, textShadow: match.matchScore >= 90 ? "0 0 16px rgba(202,253,0,0.5)" : match.matchScore >= 80 ? "0 0 16px rgba(157,123,184,0.5)" : "none" }}>
             {match.matchScore}
           </div>
-          <div style={{ color: "#666", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>MATCH</div>
+          <div style={{ color: "#888", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>MATCH</div>
         </div>
       </div>
 
@@ -203,54 +204,55 @@ function MatchCard({ match, focused }: { match: typeof MATCHES[0]; focused: bool
       <div style={{ padding: "0 18px 14px", display: "flex", gap: 7, flexWrap: "wrap" }}>
         {match.tags.map(tag => (
           <span key={tag} style={{
-            background: "transparent", border: "1px solid #1e1e1c",
-            color: "#888", fontSize: 11, fontWeight: 500,
-            padding: "4px 11px", borderRadius: 99,
+            background: "#1a1a18", border: "1px solid #2a2a28",
+            color: "#ccc", fontSize: 11, fontWeight: 600,
+            padding: "5px 12px", borderRadius: 99,
           }}>{tag}</span>
         ))}
       </div>
 
-      {/* AI Rationale */}
-      <div style={{ padding: "12px 18px", borderTop: "1px solid #161614" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-          <div style={{ width: 4, height: 4, borderRadius: "50%", background: isLocked ? "#9d7bb8" : "#cafd00" }} />
-          <p style={{ color: "#666", fontSize: 9, fontWeight: 700, letterSpacing: 2, margin: 0 }}>AI RATIONALE</p>
+      {/* Why you match */}
+      <div style={{ padding: "14px 18px", borderTop: "1px solid #1e1e1c", background: "#0e0e0c" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: isLocked ? "#9d7bb8" : "#cafd00", boxShadow: `0 0 6px ${isLocked ? "#9d7bb8" : "#cafd00"}` }} />
+          <p style={{ color: "#bbb", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: 0 }}>WHY YOU MATCH</p>
         </div>
-        <p style={{ color: "#777", fontSize: 13, margin: 0, lineHeight: 1.65 }}>{match.rationale}</p>
+        <p style={{ color: "#ddd", fontSize: 14, margin: 0, lineHeight: 1.7 }}>{match.rationale}</p>
       </div>
 
       {/* Actions */}
-      <div style={{ padding: "12px 18px", display: "flex", gap: 8, borderTop: "1px solid #161614" }}>
+      <div style={{ padding: "14px 18px", display: "flex", gap: 8, borderTop: "1px solid #1e1e1c" }}>
         <button
           onClick={() => router.push(`/matches/${match.id}`)}
           style={{
-            flex: "0 0 auto", padding: "10px 20px", borderRadius: 99,
-            background: "transparent", border: "1px solid #1e1e1c",
-            color: "#555", fontFamily: "'Space Grotesk', sans-serif",
-            fontWeight: 700, fontSize: 11, cursor: "pointer",
-            letterSpacing: 1, textTransform: "uppercase", transition: "all 0.18s",
+            flex: "0 0 auto", padding: "11px 22px", borderRadius: 99,
+            background: "#1a1a18", border: "1px solid #444",
+            color: "#ccc", fontFamily: "'Space Grotesk', sans-serif",
+            fontWeight: 700, fontSize: 12, cursor: "pointer",
+            letterSpacing: 1, transition: "all 0.18s",
+            boxShadow: "0 0 12px rgba(255,255,255,0.04)",
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "#333"; e.currentTarget.style.color = "#aaa"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e1c"; e.currentTarget.style.color = "#555"; }}
-        >View Profile</button>
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "#aaa"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "#222"; e.currentTarget.style.boxShadow = "0 0 18px rgba(255,255,255,0.1)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "#444"; e.currentTarget.style.color = "#ccc"; e.currentTarget.style.background = "#1a1a18"; e.currentTarget.style.boxShadow = "0 0 12px rgba(255,255,255,0.04)"; }}
+        >View →</button>
 
         <button
           onClick={() => router.push(isActive ? `/matches/${match.id}/review` : `/matches/${match.id}`)}
           style={{
-            flex: 1, padding: "10px", borderRadius: 99,
-            background: isActive ? (isLocked ? "#9d7bb8" : "#cafd00") : "transparent",
-            border: isActive ? "none" : "1px solid #2a2a28",
-            color: isActive ? (isLocked ? "#fff" : "#1a2200") : "#aaa",
+            flex: 1, padding: "11px", borderRadius: 99,
+            background: isActive ? (isLocked ? "#9d7bb8" : "#cafd00") : "#1a1a18",
+            border: isActive ? "none" : "1px solid #444",
+            color: isActive ? (isLocked ? "#fff" : "#1a2200") : "#ccc",
             fontFamily: "'Space Grotesk', sans-serif",
-            fontWeight: 800, fontSize: 11, cursor: "pointer",
+            fontWeight: 800, fontSize: 12, cursor: "pointer",
             letterSpacing: 1.5, textTransform: "uppercase",
-            boxShadow: isActive ? (isLocked ? "0 0 20px rgba(157,123,184,0.25)" : "0 0 20px rgba(202,253,0,0.2)") : "none",
+            boxShadow: isActive ? (isLocked ? "0 0 24px rgba(157,123,184,0.35)" : "0 0 24px rgba(202,253,0,0.3)") : "none",
             transition: "all 0.18s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; if (!isActive) { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; } }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; if (!isActive) { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#aaa"; } }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; if (!isActive) { e.currentTarget.style.borderColor = "#666"; e.currentTarget.style.color = "#fff"; } }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; if (!isActive) { e.currentTarget.style.borderColor = "#444"; e.currentTarget.style.color = "#ccc"; } }}
         >
-          {match.status === "meet-now" ? "✓ Confirm Meeting" : match.status === "both-locked" ? "Review Session" : "View →"}
+          {match.status === "meet-now" ? "✓ We Met!" : match.status === "both-locked" ? "Write a Review" : "View Profile →"}
         </button>
       </div>
     </div>
@@ -303,7 +305,7 @@ export default function MatchesPage() {
                 <span style={{ color: "#aaa", fontSize: 13 }}>{desc}</span>
               </div>
             ))}
-            <p style={{ color: "#555", fontSize: 11, margin: "16px 0 0", textAlign: "center" }}>click anywhere to close</p>
+            <p style={{ color: "#777", fontSize: 11, margin: "16px 0 0", textAlign: "center" }}>click anywhere to close</p>
           </div>
         </div>
       )}
@@ -318,6 +320,10 @@ export default function MatchesPage() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button onClick={() => router.push("/map")} style={{ background: "none", border: "1px solid #1a1a18", borderRadius: 7, color: "#555", fontFamily: "'Space Grotesk', sans-serif", fontSize: 11, padding: "4px 10px", cursor: "pointer", transition: "all 0.18s", letterSpacing: 1, fontWeight: 700 }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#cafd0040"; e.currentTarget.style.color = "#cafd00"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a18"; e.currentTarget.style.color = "#555"; }}
+          >MAP</button>
           <button onClick={() => setShowHotkeys(true)} style={{ background: "none", border: "1px solid #1a1a18", borderRadius: 7, color: "#666", fontFamily: "monospace", fontSize: 12, padding: "3px 9px", cursor: "pointer", transition: "all 0.18s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#9d7bb860"; e.currentTarget.style.color = "#9d7bb8"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a18"; e.currentTarget.style.color = "#666"; }}
@@ -333,21 +339,21 @@ export default function MatchesPage() {
 
         {/* Hero */}
         <div style={{ marginBottom: "1.5rem" }}>
-          <h1 style={{ fontSize: "clamp(26px,8vw,48px)", fontWeight: 900, lineHeight: 1.05, margin: "0 0 2px" }}>Ready to</h1>
-          <h1 style={{ fontSize: "clamp(26px,8vw,48px)", fontWeight: 900, lineHeight: 1.05, color: "#cafd00", margin: "0 0 8px" }}>Sync.</h1>
-          <p style={{ color: "#aaa", fontSize: 13, margin: 0 }}>Lock sats. Show up. Build together.</p>
+          <h1 style={{ fontSize: "clamp(26px,8vw,48px)", fontWeight: 900, lineHeight: 1.05, margin: "0 0 2px" }}>Your people</h1>
+          <h1 style={{ fontSize: "clamp(26px,8vw,48px)", fontWeight: 900, lineHeight: 1.05, color: "#cafd00", margin: "0 0 8px" }}>are here.</h1>
+          <p style={{ color: "#aaa", fontSize: 13, margin: 0 }}>Meet intentionally. Show up. Build something real.</p>
         </div>
 
         {/* Stat pills — 2x2 grid on mobile */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: "1.5rem" }}>
           {[
-            { label: "Meetups", value: "7", color: "#cafd00" },
+            { label: "Meetings", value: "7", color: "#cafd00" },
             { label: "Zaps sent", value: "21 ⚡", color: "#cafd00" },
             { label: "Reputation", value: "98%", color: "#9d7bb8" },
-            { label: "Sats locked", value: "4,200", color: "#cafd00" },
+            { label: "Sats saved", value: "4,200", color: "#cafd00" },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ padding: "10px 14px", borderRadius: 14, border: "1px solid #1a1a18", background: "#111110", display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ color: "#666", fontSize: 10, fontWeight: 600, letterSpacing: 0.5 }}>{label}</span>
+              <span style={{ color: "#888", fontSize: 10, fontWeight: 600, letterSpacing: 0.5 }}>{label}</span>
               <span style={{ color, fontSize: 15, fontWeight: 800 }}>{value}</span>
             </div>
           ))}
@@ -365,7 +371,7 @@ export default function MatchesPage() {
               </span>
             </div>
             {/* Hint */}
-            <p style={{ color: "#888", fontSize: 11, margin: "0 0 10px" }}>⚡ Sats locked — confirm attendance after you meet to release escrow</p>
+            <p style={{ color: "#888", fontSize: 11, margin: "0 0 10px" }}>Both of you committed. Tap confirm after you meet and your sats come straight back.</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {activeMeetings.map(m => <ActiveMeetingRow key={m.id} match={m} />)}
             </div>
@@ -375,7 +381,7 @@ export default function MatchesPage() {
         {/* Divider */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "0 0 20px" }}>
           <div style={{ flex: 1, height: 1, background: "#111110" }} />
-          <span style={{ color: "#555", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>YOUR MATCHES</span>
+          <span style={{ color: "#777", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>YOUR MATCHES</span>
           <div style={{ flex: 1, height: 1, background: "#111110" }} />
         </div>
 
@@ -408,7 +414,7 @@ export default function MatchesPage() {
         </div>
 
         {/* Keyboard hint */}
-        <p style={{ color: "#444", fontSize: 11, textAlign: "center", marginTop: 24, fontFamily: "monospace" }}>
+        <p style={{ color: "#777", fontSize: 11, textAlign: "center", marginTop: 24, fontFamily: "monospace" }}>
           press <span style={{ color: "#666" }}>?</span> for keyboard shortcuts
         </p>
       </div>
