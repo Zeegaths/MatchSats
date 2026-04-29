@@ -47,6 +47,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "formidable": "^3.5.4",
     "input-otp": "^1.4.2",
     "iron-session": "^8.0.4",
     "lnurl": "^0.27.0",
@@ -69,6 +70,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/formidable": "^3.5.1",
     "@types/node": "^20.19.39",
     "@types/react": "^19",
     "@types/react-dom": "^19",

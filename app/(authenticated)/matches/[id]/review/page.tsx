@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 type EscrowState = "pending" | "confirmed" | "disputed" | "resolved";
@@ -37,7 +37,8 @@ const TRANSCRIPT_LINES = [
   { speaker: "You", time: "2:08", text: "Absolutely. Let's do it within 72 hours while it's still fresh." },
 ];
 
-export default function MeetingReviewPage() {
+export default function MeetingReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("summary");
   const [escrowState, setEscrowState] = useState<EscrowState>("pending");
@@ -47,25 +48,84 @@ export default function MeetingReviewPage() {
   const [transcribeDone, setTranscribeDone] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [summaryEn, setSummaryEn] = useState("");
+  const [summarySw, setSummarySw] = useState("");
+  const [transcript, setTranscript] = useState("");
+  const [keyPoints, setKeyPoints] = useState<string[]>([]);
+  const [nextSteps, setNextSteps] = useState<string[]>([]);
+  const [error, setError] = useState("");
 
-  const handleStartRecording = () => {
-    setRecordingState("recording");
-    setRecordSeconds(0);
-    timerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioBlobRef = useRef<Blob | null>(null);
+
+  const handleStartRecording = async () => {
+    setError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        audioBlobRef.current = blob;
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      mediaRecorder.start(1000); // collect data every second
+      setRecordingState("recording");
+      setRecordSeconds(0);
+      timerRef.current = setInterval(() => setRecordSeconds(s => s + 1), 1000);
+    } catch (err) {
+      setError("Microphone access denied. Please allow microphone access and try again.");
+    }
   };
 
   const handleStopRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    mediaRecorderRef.current?.stop();
     setRecordingState("stopped");
   };
 
-  const handleProcessRecording = () => {
+  const handleProcessRecording = async () => {
+    if (!audioBlobRef.current) return;
     setRecordingState("transcribing");
-    setTimeout(() => {
-      setRecordingState("done");
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlobRef.current, "meeting.webm");
+      formData.append("match_id", id ?? "");
+
+      const res = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? "Transcription failed");
+      }
+
+      setTranscript(data.transcript);
+      setSummaryEn(data.summary_en);
+      setSummarySw(data.summary_sw);
+      setKeyPoints(data.key_points ?? []);
+      setNextSteps(data.next_steps ?? []);
       setTranscribeDone(true);
-    }, 3000);
+      setRecordingState("done");
+      setTab("summary");
+    } catch (err: any) {
+      setError(err.message ?? "Something went wrong");
+      setRecordingState("stopped");
+    }
   };
 
   const formatTime = (s: number) => {
@@ -443,19 +503,19 @@ export default function MeetingReviewPage() {
                   color: "#9d7bb8", fontSize: 10, fontWeight: 700,
                   padding: "3px 10px", borderRadius: 99, letterSpacing: 1,
                 }}>
-                  {lang === "en" ? "translation god" : "AfroXLMR + GPT-4o"}
+                  {lang === "en" ? "OpenAI GPT-4o" : "GPT-4o · Kiswahili"}
                 </span>
               </div>
               {transcribeDone ? (
                 <p style={{ color: "#aaa", fontSize: 15, lineHeight: 1.8, margin: 0 }}>
-                  {lang === "en" ? SUMMARY_EN : SUMMARY_SW}
+                  {lang === "en" ? summaryEn : summarySw}
                 </p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {[80, 100, 65, 90].map((w, i) => (
                     <div key={i} style={{ height: 14, borderRadius: 99, background: "#1e1e1c", width: `${w}%` }} />
                   ))}
-                  <p style={{ color: "#333", fontSize: 12, margin: "8px 0 0" }}>Upload audio to generate summary</p>
+                  <p style={{ color: "#555", fontSize: 12, margin: "8px 0 0" }}>Record your meeting to generate a summary</p>
                 </div>
               )}
             </div>
@@ -470,30 +530,19 @@ export default function MeetingReviewPage() {
               </p>
               {transcribeDone ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {ACTION_ITEMS.map((item) => (
-                    <div key={item.id} style={{
-                      padding: "14px 16px", borderRadius: 14,
-                      border: "1px solid #1e1e1c", background: "#141412",
-                      display: "flex", alignItems: "center", gap: 12,
-                    }}>
-                      <div style={{
-                        width: 20, height: 20, borderRadius: "50%",
-                        border: "1.5px solid #9d7bb860", flexShrink: 0,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>
+                  {nextSteps.length > 0 ? nextSteps.map((step, i) => (
+                    <div key={i} style={{ padding: "14px 16px", borderRadius: 14, border: "1px solid #1e1e1c", background: "#141412", display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: "50%", border: "1.5px solid #9d7bb860", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#9d7bb8" }} />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ color: "#ccc", fontSize: 14, fontWeight: 600, margin: 0 }}>{item.text}</p>
-                        <p style={{ color: "#444", fontSize: 11, margin: "2px 0 0" }}>
-                          {item.owner} · due in {item.due}
-                        </p>
-                      </div>
+                      <p style={{ color: "#ccc", fontSize: 14, fontWeight: 600, margin: 0 }}>{step}</p>
                     </div>
-                  ))}
+                  )) : (
+                    <p style={{ color: "#555", fontSize: 13 }}>No action items detected.</p>
+                  )}
                 </div>
               ) : (
-                <p style={{ color: "#333", fontSize: 13 }}>Action items will appear after transcription.</p>
+                <p style={{ color: "#555", fontSize: 13 }}>Action items will appear after transcription.</p>
               )}
             </div>
 
@@ -512,37 +561,17 @@ export default function MeetingReviewPage() {
               FULL TRANSCRIPT
             </p>
             {transcribeDone ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {TRANSCRIPT_LINES.map((line, i) => {
-                  const isYou = line.speaker === "You";
-                  return (
-                    <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <div style={{
-                        width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                        background: isYou ? "#cafd0015" : "#9d7bb815",
-                        border: `1px solid ${isYou ? "#cafd0030" : "#9d7bb830"}`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        color: isYou ? "#cafd00" : "#9d7bb8",
-                        fontWeight: 800, fontSize: 10,
-                      }}>
-                        {isYou ? "Y" : "A"}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-                          <span style={{ color: isYou ? "#cafd00" : "#9d7bb8", fontSize: 12, fontWeight: 700 }}>
-                            {line.speaker}
-                          </span>
-                          <span style={{ color: "#333", fontSize: 11 }}>{line.time}</span>
-                        </div>
-                        <p style={{ color: "#888", fontSize: 14, lineHeight: 1.65, margin: 0 }}>{line.text}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div>
+                {error && (
+                  <p style={{ color: "#ff6666", fontSize: 13, margin: 0 }}>{error}</p>
+                )}
+                <p style={{ color: "#ccc", fontSize: 14, lineHeight: 1.8, margin: 0, whiteSpace: "pre-wrap" }}>
+                  {transcript || "No transcript available."}
+                </p>
               </div>
             ) : (
-              <p style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
-                Upload audio to generate transcript
+              <p style={{ color: "#555", fontSize: 13, textAlign: "center", padding: "24px 0" }}>
+                Record your meeting to generate a transcript
               </p>
             )}
           </div>

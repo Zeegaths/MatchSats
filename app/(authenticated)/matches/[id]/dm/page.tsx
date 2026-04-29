@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -38,9 +38,10 @@ function formatTime(ts: number) {
   return d.toLocaleDateString();
 }
 
-export default function DMPage({ params }: { params: { id: string } }) {
+export default function DMPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const match = MATCH_DATA[params.id] ?? MATCH_DATA["1"];
+  const { id } = React.use(params);
+  const match = MATCH_DATA[id] ?? MATCH_DATA["1"];
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [input, setInput] = useState("");
   const [connected, setConnected] = useState(false);

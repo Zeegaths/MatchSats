@@ -25,6 +25,7 @@ const SESSION_OPTIONS = {
 };
 
 export async function GET(request: NextRequest) {
+console.log("[callback] hit:", request.url);
   const { searchParams } = new URL(request.url);
   const k1  = searchParams.get("k1");
   const sig  = searchParams.get("sig");

@@ -1,496 +1,300 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const MATCH_DATA: Record<string, {
-  id: number; initials: string; name: string; role: string; location: string;
-  sats: number | null; status: string; tags: string[]; matchScore: number;
-  bio: string; rationale: string; sharedTags: string[];
-  reputation: number; meetingsCompleted: number; noShow: number;
-  lnAddress: string; nostrKey: string; availability: string[];
-  depth: string;
-}> = {
-  "1": {
-    id: 1, initials: "A", name: "Amara O.", role: "Fintech Founder", location: "Lagos, Nigeria",
-    sats: 2100, status: "meet-now", matchScore: 94,
-    bio: "Building the payments layer for the next 500 million Africans. Former M-Pesa product lead. Currently fundraising pre-seed for a Lightning-native merchant platform targeting West Africa.",
-    tags: ["Lightning Network", "M-Pesa", "Fintech", "Fundraising", "West Africa", "Product"],
-    sharedTags: ["Lightning Network", "M-Pesa", "Fintech"],
-    rationale: "She's fundraising a fintech product. You have 3 years of M-Pesa integration experience. Perfect alignment on payment infra. Her fundraising timeline overlaps with your investor network connections — this intro has a real shot at moving capital.",
-    reputation: 98, meetingsCompleted: 12, noShow: 0,
-    lnAddress: "amara@getalby.com", nostrKey: "npub1am4r4...",
-    availability: ["Today 3pm–5pm", "Tomorrow 10am–12pm", "Fri 2pm–4pm"],
-    depth: "strategic",
-  },
-  "2": {
-    id: 2, initials: "D", name: "Dev X", role: "Rust Developer", location: "Nairobi, Kenya",
-    sats: 1500, status: "both-locked", matchScore: 88,
-    bio: "Protocol engineer working on cross-chain bridge infrastructure. Open-source contributor to LDK and Core Lightning. Looking for co-builders who understand the Lightning internals.",
-    tags: ["Rust", "Bitcoin", "Open Source", "LDK", "Core Lightning", "Bridges"],
-    sharedTags: ["Bitcoin", "Open Source", "Lightning Network"],
-    rationale: "Building cross-chain bridges. Your Lightning experience could accelerate their mainnet launch. Both based in Nairobi — high chance of ongoing collaboration beyond this conference.",
-    reputation: 91, meetingsCompleted: 7, noShow: 1,
-    lnAddress: "devx@walletofsatoshi.com", nostrKey: "npub1d3vx...",
-    availability: ["Today 5pm–7pm", "Tomorrow 2pm–4pm"],
-    depth: "deep",
-  },
-  "3": {
-    id: 3, initials: "P", name: "Priya K.", role: "VC Associate", location: "Mumbai, India",
-    sats: null, status: "new", matchScore: 81,
-    bio: "VC Associate at a multi-stage fund actively deploying into African crypto infrastructure. Focus on Lightning payments, DeFi rails, and identity primitives. Previously angel invested in 3 African fintech exits.",
-    tags: ["Venture Capital", "DeFi", "Africa", "Investments", "Fintech", "Identity"],
-    sharedTags: ["DeFi", "Africa", "Fintech"],
-    rationale: "Active in African crypto deals and funds exactly the stage you're at. Warm intro potential is high — she has flagged Lightning-native projects as a current thesis priority.",
-    reputation: 95, meetingsCompleted: 19, noShow: 0,
-    lnAddress: "priya@strike.me", nostrKey: "npub1priy4...",
-    availability: ["Tomorrow 11am–1pm", "Fri 9am–11am", "Sat 3pm–5pm"],
-    depth: "strategic",
-  },
-  "4": {
-    id: 4, initials: "K", name: "Kwame A.", role: "Protocol Engineer", location: "Accra, Ghana",
-    sats: null, status: "new", matchScore: 76,
-    bio: "Working on Nostr relay infrastructure and identity primitives for the African developer ecosystem. Contributor to NIPs. Building a Swahili-first social layer on Nostr.",
-    tags: ["Nostr", "Bitcoin", "Full-Stack", "Identity", "Swahili", "NIP"],
-    sharedTags: ["Nostr", "Bitcoin", "Full-Stack"],
-    rationale: "Your identity layer work is directly complementary to his Nostr relay stack. Both targeting African markets — potential to combine distribution and infrastructure.",
-    reputation: 84, meetingsCompleted: 4, noShow: 0,
-    lnAddress: "kwame@albyhub.com", nostrKey: "npub1kw4m3...",
-    availability: ["Today 6pm–8pm", "Tomorrow 4pm–6pm"],
-    depth: "deep",
-  },
-};
+// ── Types ─────────────────────────────────────────────────────────────
+interface MatchData {
+  id: number;
+  name: string;
+  role: string;
+  location: string;
+  initials: string;
+  score: number;
+  rationale: string;
+  status: string;
+  core_vibe: string;
+  interests: string[];
+  building: string | null;
+  needs: string | null;
+  lightning_addr: string | null;
+  escrow: {
+    mine: string | null;
+    theirs: string | null;
+    both_locked: boolean;
+  };
+}
 
-const SAT_AMOUNTS = [1000, 2100, 5000, 10000];
+// ── QR Code for invoice ───────────────────────────────────────────────
+function InvoiceQR({ paymentRequest }: { paymentRequest: string }) {
+  const size = 200;
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(paymentRequest)}&bgcolor=141412&color=cafd00&qzone=2`;
+  return (
+    <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid #cafd0040" }}>
+      <img src={url} width={size} height={size} alt="Lightning invoice" style={{ display: "block" }} />
+    </div>
+  );
+}
 
-export default function MatchDetailPage({ params }: { params: { id: string } }) {
+export default function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const match = MATCH_DATA[params.id] ?? MATCH_DATA["1"];
+  const { id } = React.use(params);
 
-  const [lockStep, setLockStep] = useState<"idle" | "choose" | "confirm" | "locked">("idle");
-  const [selectedSats, setSelectedSats] = useState(2100);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [match, setMatch] = useState<MatchData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lockStep, setLockStep] = useState<"idle" | "creating" | "invoice" | "locked">("idle");
+  const [paymentRequest, setPaymentRequest] = useState("");
+  const [paymentHash, setPaymentHash] = useState("");
+  const [lockError, setLockError] = useState("");
+  const [checking, setChecking] = useState(false);
 
-  const isActive = match.status !== "new";
+  // Fetch real match data
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(`/api/match/${id}`);
+        if (!res.ok) { router.push("/matches"); return; }
+        const data = await res.json();
+        setMatch(data);
+        // If already locked, show locked state
+        if (data.escrow.mine === "held") setLockStep("locked");
+      } catch {
+        router.push("/matches");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [id]);
+
+  // Poll for payment after invoice shown
+  useEffect(() => {
+    if (lockStep !== "invoice" || !paymentHash) return;
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/escrow?match_id=${match?.id}`);
+        const data = await res.json();
+        const mine = data.escrows?.find((e: any) => e.status === "held");
+        if (mine) {
+          clearInterval(id);
+          setLockStep("locked");
+          setMatch(prev => prev ? { ...prev, escrow: { ...prev.escrow, mine: "held", both_locked: data.both_locked } } : prev);
+        }
+      } catch {}
+    }, 3000);
+    return () => clearInterval(id);
+  }, [lockStep, paymentHash]);
+
+  const handleLockSats = async () => {
+    if (!match) return;
+    setLockStep("creating");
+    setLockError("");
+    try {
+      const res = await fetch("/api/escrow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ match_id: match.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.payment_request) {
+        throw new Error(data.error ?? "Failed to create invoice");
+      }
+      setPaymentRequest(data.payment_request);
+      setPaymentHash(data.payment_hash);
+      setLockStep("invoice");
+    } catch (err: any) {
+      setLockError(err.message);
+      setLockStep("idle");
+    }
+  };
+
+  const scoreColor = !match ? "#555" : match.score >= 90 ? "#cafd00" : match.score >= 80 ? "#9d7bb8" : "#777";
+  const isActive = match?.status === "both_locked" || match?.status === "confirmed";
+  const isLocked = match?.escrow.mine === "held";
+
+  if (loading) return (
+    <main style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 12px #cafd00", animation: "pulse 1s ease-in-out infinite" }} />
+      <style>{`@keyframes pulse{0%,100%{opacity:0.4}50%{opacity:1}}`}</style>
+    </main>
+  );
+
+  if (!match) return null;
 
   return (
-    <main style={{
-      minHeight: "100vh", background: "#0e0e0e",
-      color: "#fff", fontFamily: "'Space Grotesk', sans-serif",
-    }}>
-      {/* Sticky nav */}
-      <div style={{
-        position: "sticky", top: 0, zIndex: 10,
-        background: "#0e0e0eee", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid #1a1a18",
-        padding: "1.25rem 1.5rem",
-        display: "flex", alignItems: "center", gap: 16,
-      }}>
-        <button
-          onClick={() => router.back()}
-          style={{
-            background: "none", border: "1px solid #222220", borderRadius: 99,
-            color: "#666", fontFamily: "'Space Grotesk', sans-serif",
-            fontWeight: 700, fontSize: 12, cursor: "pointer",
-            padding: "8px 18px", letterSpacing: 1,
-            transition: "all 0.18s ease",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#444"; e.currentTarget.style.color = "#aaa"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#222220"; e.currentTarget.style.color = "#666"; }}
-        >
-          ← BACK
-        </button>
-        <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 15, letterSpacing: 2, marginLeft: "auto" }}>
-          MATCHSATS
-        </span>
+    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", paddingBottom: 120 }}>
+      <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Header */}
+      <div style={{ position: "sticky", top: 0, zIndex: 10, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(14px)", borderBottom: "1px solid #111110", padding: "1rem 1.25rem", display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={() => router.back()} style={{ background: "none", border: "1px solid #1e1e1c", borderRadius: 99, color: "#666", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 11, cursor: "pointer", padding: "6px 14px", letterSpacing: 1, transition: "all 0.18s" }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#aaa"; e.currentTarget.style.borderColor = "#333"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "#666"; e.currentTarget.style.borderColor = "#1e1e1c"; }}
+        >← BACK</button>
+        <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 13, letterSpacing: 2 }}>MATCHSATS</span>
       </div>
 
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "2rem 1.5rem 8rem" }}>
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "1.5rem 1.25rem" }}>
 
-        {/* ── Profile hero ── */}
-        <div style={{
-          background: "#141412", border: "1px solid #222220",
-          borderRadius: 24, padding: "2rem", marginBottom: 16,
-        }}>
-          <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-            {/* Avatar */}
-            <div style={{
-              width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
-              background: "#cafd0018", border: "2px solid #cafd0030",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#cafd00", fontWeight: 900, fontSize: 26,
-            }}>
+        {/* Profile hero */}
+        <div style={{ borderRadius: 20, border: `1px solid ${isLocked ? "#cafd0040" : "#1e1e1c"}`, background: "#111110", padding: "24px", marginBottom: 12, animation: "slideUp 0.3s ease" }}>
+          {isActive && <div style={{ height: 2, background: "linear-gradient(90deg, #cafd00, #cafd0020)", borderRadius: 99, marginBottom: 20 }} />}
+
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 16 }}>
+            <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#cafd0018", border: "2px solid #cafd0050", display: "flex", alignItems: "center", justifyContent: "center", color: "#cafd00", fontWeight: 900, fontSize: 22, boxShadow: "0 0 20px rgba(202,253,0,0.15)", flexShrink: 0 }}>
               {match.initials}
             </div>
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{match.name}</h1>
-                {match.status === "meet-now" && (
-                  <span style={{
-                    background: "#cafd0015", border: "1px solid #cafd0040",
-                    color: "#cafd00", fontSize: 10, fontWeight: 700,
-                    padding: "3px 10px", borderRadius: 99, letterSpacing: 1.5,
-                    display: "flex", alignItems: "center", gap: 5,
-                  }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#cafd00",
-                      boxShadow: "0 0 6px #cafd00", display: "inline-block" }} />
-                    MEET NOW
-                  </span>
-                )}
-                {match.status === "both-locked" && (
-                  <span style={{
-                    background: "#cafd0015", border: "1px solid #cafd0040",
-                    color: "#cafd00", fontSize: 10, fontWeight: 700,
-                    padding: "3px 10px", borderRadius: 99, letterSpacing: 1.5,
-                  }}>
-                    ⚡ BOTH LOCKED
-                  </span>
-                )}
-              </div>
-              <p style={{ color: "#cafd00", fontSize: 14, fontWeight: 600, margin: "0 0 4px" }}>
-                {match.role}
-              </p>
-              <p style={{ color: "#555", fontSize: 13, margin: 0 }}>{match.location}</p>
+            <div style={{ flex: 1 }}>
+              <h1 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 4px" }}>{match.name}</h1>
+              <p style={{ color: "#bbb", fontSize: 14, margin: "0 0 4px" }}>{match.role}</p>
+              <p style={{ color: "#555", fontSize: 12, margin: 0 }}>{match.location}</p>
             </div>
-
-            {/* Match score */}
             <div style={{ textAlign: "center", flexShrink: 0 }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: "50%",
-                border: "2px solid #cafd0040", background: "#cafd0010",
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-              }}>
-                <span style={{ color: "#cafd00", fontWeight: 900, fontSize: 18, lineHeight: 1 }}>{match.matchScore}</span>
-                <span style={{ color: "#cafd0088", fontSize: 8, fontWeight: 700, letterSpacing: 1 }}>MATCH</span>
-              </div>
+              <div style={{ color: scoreColor, fontWeight: 900, fontSize: 28, lineHeight: 1, textShadow: `0 0 16px ${scoreColor}60` }}>{match.score}</div>
+              <div style={{ color: "#555", fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>MATCH</div>
             </div>
           </div>
 
-          {/* Bio */}
-          <p style={{ color: "#888", fontSize: 14, lineHeight: 1.7, margin: "20px 0 0" }}>
-            {match.bio}
-          </p>
-        </div>
-
-        {/* ── Reputation strip ── */}
-        <div style={{
-          display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap",
-        }}>
-          {[
-            { label: "Reputation", value: `${match.reputation}%` },
-            { label: "Meetings", value: match.meetingsCompleted },
-            { label: "No-shows", value: match.noShow },
-            { label: "Depth", value: match.depth },
-          ].map(({ label, value }) => (
-            <div key={label} style={{
-              flex: "1 1 120px",
-              padding: "14px 16px", borderRadius: 14,
-              border: "1px solid #1e1e1c", background: "#111110",
-              display: "flex", flexDirection: "column", gap: 4,
-            }}>
-              <span style={{ color: "#444", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>
-                {label.toUpperCase()}
-              </span>
-              <span style={{ color: "#fff", fontSize: 18, fontWeight: 800 }}>{value}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* ── AI Rationale ── */}
-        <div style={{
-          background: "#141412", border: "1px solid #222220",
-          borderRadius: 20, padding: "20px", marginBottom: 16,
-        }}>
-          <p style={{ color: "#444", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 10px" }}>
-            AI RATIONALE
-          </p>
-          <p style={{ color: "#aaa", fontSize: 15, lineHeight: 1.75, margin: 0 }}>
-            {match.rationale}
-          </p>
-        </div>
-
-        {/* ── Tags ── */}
-        <div style={{
-          background: "#141412", border: "1px solid #222220",
-          borderRadius: 20, padding: "20px", marginBottom: 16,
-        }}>
-          <p style={{ color: "#444", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 14px" }}>
-            THEIR SIGNAL SPACE
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {match.tags.map((tag) => {
-              const shared = match.sharedTags.includes(tag);
-              return (
-                <span key={tag} style={{
-                  padding: "7px 14px", borderRadius: 99, fontSize: 12, fontWeight: shared ? 700 : 400,
-                  border: shared ? "1px solid #cafd0050" : "1px solid #222220",
-                  background: shared ? "#cafd0010" : "transparent",
-                  color: shared ? "#cafd00" : "#555",
-                  letterSpacing: 0.5,
-                }}>
-                  {tag}
-                </span>
-              );
-            })}
-          </div>
-          {match.sharedTags.length > 0 && (
-            <p style={{ color: "#444", fontSize: 11, margin: "12px 0 0" }}>
-              ◈ {match.sharedTags.length} shared signals highlighted
-            </p>
-          )}
-        </div>
-
-        {/* ── Availability ── */}
-        <div style={{
-          background: "#141412", border: "1px solid #222220",
-          borderRadius: 20, padding: "20px", marginBottom: 16,
-        }}>
-          <p style={{ color: "#444", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 14px" }}>
-            AVAILABILITY
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {match.availability.map((slot) => (
-              <button
-                key={slot}
-                onClick={() => setSelectedSlot(slot)}
-                style={{
-                  padding: "12px 16px", borderRadius: 12, textAlign: "left",
-                  border: selectedSlot === slot ? "1px solid #cafd00" : "1px solid #1e1e1c",
-                  background: selectedSlot === slot ? "#cafd0010" : "transparent",
-                  color: selectedSlot === slot ? "#cafd00" : "#666",
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  fontWeight: selectedSlot === slot ? 700 : 400,
-                  fontSize: 14, cursor: "pointer",
-                  transition: "all 0.18s ease",
-                }}
-              >
-                {slot}
-              </button>
+          {/* Tags */}
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 16 }}>
+            {match.interests.slice(0, 5).map(tag => (
+              <span key={tag} style={{ background: "#1a1a18", border: "1px solid #2a2a28", color: "#bbb", fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 99 }}>{tag}</span>
             ))}
+            <span style={{ background: "#9d7bb815", border: "1px solid #9d7bb840", color: "#9d7bb8", fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 99 }}>{match.core_vibe}</span>
+          </div>
+
+          {/* Why you match */}
+          <div style={{ background: "#0e0e0c", borderRadius: 12, padding: "14px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 6px #cafd00" }} />
+              <p style={{ color: "#bbb", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: 0 }}>WHY YOU MATCH</p>
+            </div>
+            <p style={{ color: "#ddd", fontSize: 14, margin: 0, lineHeight: 1.7 }}>{match.rationale}</p>
           </div>
         </div>
 
-        {/* ── Escrow / Lock Sats panel ── */}
-        {lockStep === "idle" && (
-          <div style={{
-            background: "#141412", border: "1px solid #222220",
-            borderRadius: 20, padding: "20px", marginBottom: 16,
-          }}>
-            <p style={{ color: "#444", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 6px" }}>
-              ESCROW LAYER
-            </p>
-            <p style={{ color: "#777", fontSize: 13, lineHeight: 1.6, margin: "0 0 16px" }}>
-              Lock sats to commit to this meeting. Both parties stake — no-shows are penalised automatically via Lightning hold invoices.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                ["Both attend", "Full refund ✓"],
-                ["You attend, they don't", "Their sats → you"],
-                ["Neither attends", "Full refund (timeout)"],
-              ].map(([s, o]) => (
-                <div key={s} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0" }}>
-                  <span style={{ color: "#555", fontSize: 13 }}>{s}</span>
-                  <span style={{ color: "#888", fontSize: 13, fontWeight: 600 }}>{o}</span>
-                </div>
-              ))}
-            </div>
+        {/* Building + Needs */}
+        {(match.building || match.needs) && (
+          <div style={{ display: "grid", gridTemplateColumns: match.building && match.needs ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 12 }}>
+            {match.building && (
+              <div style={{ borderRadius: 16, border: "1px solid #1e1e1c", background: "#111110", padding: "16px" }}>
+                <p style={{ color: "#cafd00", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 8px" }}>⚡ BUILDING</p>
+                <p style={{ color: "#bbb", fontSize: 13, margin: 0, lineHeight: 1.6 }}>{match.building}</p>
+              </div>
+            )}
+            {match.needs && (
+              <div style={{ borderRadius: 16, border: "1px solid #1e1e1c", background: "#111110", padding: "16px" }}>
+                <p style={{ color: "#9d7bb8", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 8px" }}>◈ NEEDS</p>
+                <p style={{ color: "#bbb", fontSize: 13, margin: 0, lineHeight: 1.6 }}>{match.needs}</p>
+              </div>
+            )}
           </div>
         )}
 
-        {lockStep === "choose" && (
-          <div style={{
-            background: "#141412", border: "1px solid #cafd0030",
-            borderRadius: 20, padding: "20px", marginBottom: 16,
-          }}>
-            <p style={{ color: "#cafd00", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 14px" }}>
-              CHOOSE STAKE AMOUNT
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-              {SAT_AMOUNTS.map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => setSelectedSats(amt)}
-                  style={{
-                    padding: "14px", borderRadius: 14,
-                    border: selectedSats === amt ? "1px solid #cafd00" : "1px solid #1e1e1c",
-                    background: selectedSats === amt ? "#cafd0012" : "transparent",
-                    color: selectedSats === amt ? "#cafd00" : "#666",
-                    fontFamily: "'Space Grotesk', sans-serif",
-                    fontWeight: 800, fontSize: 16, cursor: "pointer",
-                    transition: "all 0.18s ease",
-                  }}
-                >
-                  {amt.toLocaleString()}
-                  <span style={{ display: "block", fontSize: 11, fontWeight: 400, opacity: 0.6, marginTop: 2 }}>
-                    sats
-                  </span>
-                </button>
-              ))}
+        {/* Escrow status */}
+        {(match.escrow.mine || match.escrow.theirs) && (
+          <div style={{ borderRadius: 16, border: "1px solid #cafd0030", background: "#cafd0008", padding: "14px 18px", marginBottom: 12, display: "flex", gap: 12, alignItems: "center" }}>
+            <div>
+              <p style={{ color: "#cafd00", fontSize: 11, fontWeight: 700, margin: "0 0 4px" }}>ESCROW STATUS</p>
+              <p style={{ color: "#888", fontSize: 12, margin: 0 }}>
+                You: <span style={{ color: match.escrow.mine === "held" ? "#cafd00" : "#555" }}>{match.escrow.mine === "held" ? "✓ Locked" : "Pending"}</span>
+                {"  ·  "}
+                Them: <span style={{ color: match.escrow.theirs === "held" ? "#cafd00" : "#555" }}>{match.escrow.theirs === "held" ? "✓ Locked" : "Pending"}</span>
+              </p>
             </div>
-            <p style={{ color: "#555", fontSize: 12, margin: "0 0 16px" }}>
-              ≈ ${(selectedSats * 0.00043).toFixed(2)} USD at current rate
-            </p>
-            <button
-              onClick={() => setLockStep("confirm")}
-              style={{
-                width: "100%", padding: "14px", borderRadius: 99,
+            {match.escrow.both_locked && (
+              <span style={{ marginLeft: "auto", background: "#cafd0020", border: "1px solid #cafd0040", color: "#cafd00", fontSize: 10, fontWeight: 700, padding: "4px 12px", borderRadius: 99 }}>BOTH LOCKED</span>
+            )}
+          </div>
+        )}
+
+        {/* Invoice QR */}
+        {lockStep === "invoice" && (
+          <div style={{ borderRadius: 20, border: "1px solid #cafd0030", background: "#111110", padding: "24px", marginBottom: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, animation: "slideUp 0.3s ease" }}>
+            <p style={{ color: "#cafd00", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: 0 }}>SCAN TO LOCK 2,100 SATS</p>
+            <InvoiceQR paymentRequest={paymentRequest} />
+            {/* Pay with Alby if available */}
+            {typeof window !== "undefined" && (window as any).webln && (
+              <button onClick={async () => {
+                try {
+                  const webln = (window as any).webln;
+                  await webln.enable();
+                  await webln.sendPayment(paymentRequest);
+                } catch (err: any) {
+                  setLockError(err.message ?? "Payment failed");
+                }
+              }} style={{
+                width: "100%", padding: "13px", borderRadius: 99,
                 background: "#cafd00", border: "none",
                 color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 800, fontSize: 14, cursor: "pointer",
-                letterSpacing: 1.5, boxShadow: "0 0 24px rgba(202,253,0,0.25)",
-              }}
-            >
-              CONTINUE →
-            </button>
-          </div>
-        )}
-
-        {lockStep === "confirm" && (
-          <div style={{
-            background: "#141412", border: "1px solid #cafd0030",
-            borderRadius: 20, padding: "20px", marginBottom: 16,
-          }}>
-            <p style={{ color: "#cafd00", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 16px" }}>
-              CONFIRM LOCK
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
-              {[
-                ["Meeting with", match.name],
-                ["Time slot", selectedSlot ?? "No slot selected"],
-                ["Your stake", `${selectedSats.toLocaleString()} sats`],
-                ["Their stake", `${selectedSats.toLocaleString()} sats`],
-                ["Escrow type", "Lightning Hold Invoice"],
-              ].map(([k, v]) => (
-                <div key={k as string} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ color: "#555", fontSize: 13 }}>{k}</span>
-                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{v}</span>
-                </div>
-              ))}
+                fontWeight: 800, fontSize: 13, cursor: "pointer",
+                letterSpacing: 1.5, boxShadow: "0 0 20px rgba(202,253,0,0.3)",
+              }}>
+                PAY WITH ALBY ⚡
+              </button>
+            )}
+            <p style={{ color: "#777", fontSize: 12, textAlign: "center", margin: 0 }}>or scan with your Lightning wallet</p>
+            <div style={{ background: "#0e0e0c", borderRadius: 10, padding: "10px 14px", width: "100%", boxSizing: "border-box" }}>
+              <p style={{ color: "#555", fontSize: 9, fontWeight: 700, letterSpacing: 1, margin: "0 0 4px" }}>INVOICE</p>
+              <p style={{ color: "#444", fontSize: 10, fontFamily: "monospace", margin: 0, wordBreak: "break-all", lineHeight: 1.4 }}>{paymentRequest.slice(0, 60)}...</p>
             </div>
-            <button
-              onClick={() => setLockStep("locked")}
-              style={{
-                width: "100%", padding: "16px", borderRadius: 99,
-                background: "#cafd00", border: "none",
-                color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 800, fontSize: 14, cursor: "pointer",
-                letterSpacing: 1.5, boxShadow: "0 0 28px rgba(202,253,0,0.3)",
-              }}
-            >
-              ⚡ LOCK {selectedSats.toLocaleString()} SATS
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#9d7bb8", animation: "pulse 1.2s ease-in-out infinite", boxShadow: "0 0 6px #9d7bb8" }} />
+              <span style={{ color: "#9d7bb8", fontSize: 11, fontWeight: 600 }}>Waiting for payment...</span>
+            </div>
           </div>
         )}
 
+        {/* Locked confirmation */}
         {lockStep === "locked" && (
-          <div style={{
-            background: "#cafd0010", border: "1px solid #cafd0050",
-            borderRadius: 20, padding: "24px", marginBottom: 16,
-            textAlign: "center",
-          }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>⚡</div>
-            <h3 style={{ color: "#cafd00", fontWeight: 800, fontSize: 20, margin: "0 0 8px" }}>
-              Sats Locked
-            </h3>
-            <p style={{ color: "#cafd0099", fontSize: 14, margin: "0 0 16px", lineHeight: 1.6 }}>
-              {selectedSats.toLocaleString()} sats held in escrow. {match.name} will be notified. Both parties must confirm attendance after the meeting.
+          <div style={{ borderRadius: 20, border: "1px solid #cafd0040", background: "#cafd0008", padding: "20px", marginBottom: 12, textAlign: "center", animation: "slideUp 0.3s ease" }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>⚡</div>
+            <p style={{ color: "#cafd00", fontWeight: 800, fontSize: 16, margin: "0 0 4px" }}>Sats locked!</p>
+            <p style={{ color: "#888", fontSize: 13, margin: 0 }}>
+              {match.escrow.both_locked ? "Both sides locked — you're committed. Go meet!" : "Waiting for them to lock their sats..."}
             </p>
-            <div style={{
-              background: "#0e0e0e", borderRadius: 12, padding: "12px 16px",
-              display: "flex", justifyContent: "space-between",
-            }}>
-              <span style={{ color: "#555", fontSize: 13 }}>Slot</span>
-              <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{selectedSlot ?? "TBD"}</span>
-            </div>
           </div>
+        )}
+
+        {lockError && (
+          <p style={{ color: "#ff6666", fontSize: 13, margin: "0 0 12px", textAlign: "center" }}>{lockError}</p>
         )}
       </div>
 
-      {/* ── Floating CTA ── */}
-      {lockStep !== "locked" && (
-        <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          padding: "1rem 1.5rem 2rem",
-          background: "linear-gradient(to top, #0e0e0e 60%, transparent)",
-        }}>
-          <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", gap: 10 }}>
-            <button
-              onClick={() => router.push(`/matches/${match.id}/dm`)}
-              style={{
-                flex: "0 0 auto", padding: "15px 22px", borderRadius: 99,
-                background: "transparent", border: "1px solid #1e1e1c",
-                color: "#666", fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 700, fontSize: 12, cursor: "pointer",
-                letterSpacing: 1, transition: "all 0.18s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "#9d7bb860"; e.currentTarget.style.color = "#9d7bb8"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e1c"; e.currentTarget.style.color = "#666"; }}
-            >
-              MESSAGE
-            </button>
-            <button
-              onClick={() => setLockStep(lockStep === "idle" ? "choose" : lockStep === "choose" ? "confirm" : "locked")}
-              style={{
-                flex: 1, padding: "15px", borderRadius: 99,
-                background: isActive ? "#cafd00" : "transparent",
-                border: isActive ? "none" : "1px solid #cafd0050",
-                color: isActive ? "#1a2200" : "#cafd00",
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 800, fontSize: 14, cursor: "pointer",
-                letterSpacing: 1.5, textTransform: "uppercase",
-                boxShadow: isActive ? "0 0 30px rgba(202,253,0,0.3)" : "none",
-                transition: "opacity 0.18s",
-              }}
+      {/* Floating CTA */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "1rem 1.25rem 2rem", background: "linear-gradient(to top, #0a0a0a 60%, transparent)" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", gap: 10 }}>
+          <button onClick={() => router.push(`/matches/${id}/dm`)} style={{ flex: "0 0 auto", padding: "14px 20px", borderRadius: 99, background: "transparent", border: "1px solid #1e1e1c", color: "#777", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.18s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#9d7bb860"; e.currentTarget.style.color = "#9d7bb8"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e1c"; e.currentTarget.style.color = "#777"; }}
+          >MESSAGE ◈</button>
+
+          {lockStep === "idle" && !isLocked && (
+            <button onClick={handleLockSats} style={{ flex: 1, padding: "14px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 28px rgba(202,253,0,0.3)", transition: "opacity 0.18s" }}
               onMouseEnter={e => (e.currentTarget.style.opacity = "0.88")}
               onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-            >
-              {match.status === "meet-now"
-                ? "Confirm Attendance"
-                : match.status === "both-locked"
-                ? "Confirm Attendance"
-                : lockStep === "idle" ? "Lock Sats ⚡" : "Continue →"}
-            </button>
-          </div>
-        </div>
-      )}
+            >LOCK SATS ⚡</button>
+          )}
 
-      {/* After locked — message still accessible */}
-      {lockStep === "locked" && (
-        <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          padding: "1rem 1.5rem 2rem",
-          background: "linear-gradient(to top, #0e0e0e 60%, transparent)",
-        }}>
-          <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", gap: 10 }}>
-            <button
-              onClick={() => router.push(`/matches/${match.id}/dm`)}
-              style={{
-                flex: 1, padding: "15px", borderRadius: 99,
-                background: "transparent", border: "1px solid #9d7bb840",
-                color: "#9d7bb8", fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 700, fontSize: 14, cursor: "pointer",
-                letterSpacing: 1, transition: "all 0.18s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#9d7bb810"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >MESSAGE ◈</button>
-            <button
-              onClick={() => router.push(`/matches/${match.id}/review`)}
-              style={{
-                flex: 1, padding: "15px", borderRadius: 99,
-                background: "transparent", border: "1px solid #cafd0040",
-                color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 700, fontSize: 14, cursor: "pointer",
-                letterSpacing: 1, transition: "all 0.18s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#cafd0010"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >VIEW ESCROW ⚡</button>
-          </div>
+          {lockStep === "creating" && (
+            <button disabled style={{ flex: 1, padding: "14px", borderRadius: 99, background: "transparent", border: "1px solid #cafd0040", color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, cursor: "default", opacity: 0.6, letterSpacing: 1 }}>
+              CREATING INVOICE...
+            </button>
+          )}
+
+          {lockStep === "invoice" && (
+            <button disabled style={{ flex: 1, padding: "14px", borderRadius: 99, background: "transparent", border: "1px solid #9d7bb840", color: "#9d7bb8", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, cursor: "default", letterSpacing: 1 }}>
+              WAITING FOR PAYMENT...
+            </button>
+          )}
+
+          {(lockStep === "locked" || isLocked) && (
+            <button onClick={() => router.push(`/matches/${id}/review`)} style={{ flex: 1, padding: "14px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 28px rgba(202,253,0,0.3)" }}>
+              GO TO REVIEW →
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </main>
   );
 }

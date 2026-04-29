@@ -98,33 +98,25 @@ export default function LoginPage() {
       if (!webln) throw new Error("WebLN not available");
       await webln.enable();
 
-      // Fetch a challenge k1
       const res = await fetch("/api/auth/lnurl");
-      const { k1: challenge, callback } = await res.json();
+      const data = await res.json();
 
-      // Sign it
-      const { signature, publicKey } = await webln.signMessage(challenge);
+      // Must pass the bech32 encoded LNURL, not the raw URL
+      await webln.lnurl(data.lnurl);
 
-      // Send to callback
-      const cbUrl = `${callback}?k1=${challenge}&sig=${signature}&key=${publicKey}`;
-      const cbRes = await fetch(cbUrl);
-      const cbData = await cbRes.json();
+      // Signed — redirect directly to profile setup
+      setAlbyStatus("done");
+      setTimeout(() => router.push("/profile"), 1000);
 
-      if (cbData.status === "OK") {
-        setAlbyStatus("done");
-        setTimeout(() => setStep("connecting"), 600);
-      } else {
-        throw new Error(cbData.reason ?? "Sign failed");
-      }
     } catch (err: any) {
-      console.error("Alby sign failed:", err);
+      console.error("[alby]", err);
       setAlbyStatus("error");
     }
   }
 
-  // ── Poll for session (QR flow) ────────────────────────────────────
+  // ── Poll for session (QR flow + Alby flow) ──────────────────────────
   useEffect(() => {
-    if (!polling || !k1) return;
+    if (!polling) return;
     const id = setInterval(async () => {
       try {
         const res = await fetch("/api/auth/me");
@@ -132,7 +124,7 @@ export default function LoginPage() {
         if (data.loggedIn) {
           clearInterval(id);
           setPolling(false);
-          setStep("connecting");
+          router.push("/profile");
         }
       } catch {}
     }, 1500);
@@ -140,12 +132,16 @@ export default function LoginPage() {
     return () => { clearInterval(id); clearTimeout(timeout); };
   }, [polling, k1]);
 
-  // ── Progress bar ──────────────────────────────────────────────────
+  // ── Progress bar + auto redirect ─────────────────────────────────
   useEffect(() => {
     if (step !== "connecting") return;
     const id = setInterval(() => {
       setProgress(p => {
-        if (p >= 100) { clearInterval(id); setTimeout(() => setStep("done"), 400); return 100; }
+        if (p >= 100) {
+          clearInterval(id);
+          setTimeout(() => router.push("/profile"), 400);
+          return 100;
+        }
         return p + 5;
       });
     }, 80);

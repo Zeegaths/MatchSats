@@ -265,23 +265,119 @@ export default function MatchesPage() {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [livePulse, setLivePulse] = useState(true);
-  const activeMeetings = MATCHES.filter(m => m.status !== "new");
+  const [matches, setMatches] = useState<typeof MATCHES>([]);
+  const [stats, setStats] = useState({ meetings: 0, zaps: 0, reputation: 100, satsSaved: 0 });
+  const [loading, setLoading] = useState(true);
+  const [matching, setMatching] = useState(false);
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const res = await fetch("/api/match");
+        if (!res.ok) return;
+        const data = await res.json();
+        const confirmed = data.matches?.filter((m: any) => m.status === "confirmed").length ?? 0;
+        const locked = data.matches?.filter((m: any) => m.status === "both_locked" || m.status === "confirmed").length ?? 0;
+        setStats({
+          meetings: confirmed,
+          zaps: confirmed * 3,
+          reputation: confirmed > 0 ? 98 : 100,
+          satsSaved: locked * 2100,
+        });
+      } catch {}
+    }
+    loadStats();
+  }, []);
+
+  // Fetch existing matches on load
+  useEffect(() => {
+    async function loadMatches() {
+      try {
+        const res = await fetch("/api/match");
+        if (!res.ok) {
+          setMatches(MATCHES); // not logged in — show mock
+          return;
+        }
+        const data = await res.json();
+        if (data.matches?.length > 0) {
+          setMatches(data.matches.map((m: any) => ({
+            id: m.id,
+            initials: (m.name ?? "?")[0].toUpperCase(),
+            name: m.name ?? "Unknown",
+            role: m.role ?? "Conference Attendee",
+            location: m.location ?? "Here",
+            sats: null,
+            status: m.status === "both_locked" ? "both-locked" : m.status === "confirmed" ? "meet-now" : "new",
+            tags: (typeof m.interests === "string" 
+              ? JSON.parse(m.interests) 
+              : (m.interests ?? [])).slice(0, 3).map((t: string) => t.replace("#", "")),
+            rationale: m.rationale ?? "",
+            matchScore: m.score ?? 0,
+            timer: null,
+          })));
+        } else {
+          // Logged in but no matches yet — show empty state, NOT mock
+          setMatches([]);
+        }
+      } catch {
+        setMatches(MATCHES);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadMatches();
+  }, []);
+
+  // Run AI matching
+  async function runMatching() {
+    setMatching(true);
+    try {
+      const res = await fetch("/api/match", { method: "POST" });
+      const data = await res.json();
+      if (data.matches?.length > 0) {
+        setMatches(prev => {
+          const newOnes = data.matches.map((m: any) => ({
+            id: m.pubkey,
+            initials: (m.name ?? "?")[0].toUpperCase(),
+            name: m.name,
+            role: m.role ?? "Conference Attendee",
+            location: "Here",
+            sats: null,
+            status: "new" as const,
+            tags: m.tags ?? [],
+            rationale: m.rationale,
+            matchScore: m.score,
+            timer: null,
+          }));
+          // Merge — avoid duplicates
+          const existingIds = new Set(prev.map(m => String(m.id)));
+          return [...prev, ...newOnes.filter((m: any) => !existingIds.has(String(m.id)))];
+        });
+      }
+    } catch (err) {
+      console.error("Matching failed:", err);
+    } finally {
+      setMatching(false);
+    }
+  }
+
+  const activeMeetings = matches.filter(m => m.status !== "new");
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (["INPUT","TEXTAREA"].includes((e.target as HTMLElement).tagName)) return;
       switch (e.key) {
-        case "j": case "ArrowDown": e.preventDefault(); setFocusedIndex(i => Math.min(i+1, MATCHES.length-1)); break;
+        case "j": case "ArrowDown": e.preventDefault(); setFocusedIndex(i => Math.min(i+1, matches.length-1)); break;
         case "k": case "ArrowUp":  e.preventDefault(); setFocusedIndex(i => Math.max(i-1, 0)); break;
-        case "Enter": if (focusedIndex >= 0) router.push(`/matches/${MATCHES[focusedIndex].id}`); break;
-        case "c": if (focusedIndex >= 0 && MATCHES[focusedIndex].status !== "new") router.push(`/matches/${MATCHES[focusedIndex].id}/review`); break;
+        case "Enter": if (focusedIndex >= 0) router.push(`/matches/${matches[focusedIndex].id}`); break;
+        case "c": if (focusedIndex >= 0 && matches[focusedIndex].status !== "new") router.push(`/matches/${matches[focusedIndex].id}/review`); break;
         case "?": setShowHotkeys(h => !h); break;
         case "Escape": setShowHotkeys(false); break;
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [focusedIndex]);
+  }, [focusedIndex, matches]);
 
   useEffect(() => {
     const id = setInterval(() => setLivePulse(p => !p), 1200);
@@ -341,16 +437,29 @@ export default function MatchesPage() {
         <div style={{ marginBottom: "1.5rem" }}>
           <h1 style={{ fontSize: "clamp(26px,8vw,48px)", fontWeight: 900, lineHeight: 1.05, margin: "0 0 2px" }}>Your people</h1>
           <h1 style={{ fontSize: "clamp(26px,8vw,48px)", fontWeight: 900, lineHeight: 1.05, color: "#cafd00", margin: "0 0 8px" }}>are here.</h1>
-          <p style={{ color: "#aaa", fontSize: 13, margin: 0 }}>Meet intentionally. Show up. Build something real.</p>
+          <p style={{ color: "#aaa", fontSize: 13, margin: "0 0 16px" }}>Meet intentionally. Show up. Build something real.</p>
+          <button onClick={runMatching} disabled={matching} style={{
+            padding: "11px 22px", borderRadius: 99,
+            background: matching ? "transparent" : "#cafd00",
+            border: matching ? "1px solid #cafd0040" : "none",
+            color: matching ? "#cafd00" : "#1a2200",
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontWeight: 800, fontSize: 12, cursor: matching ? "default" : "pointer",
+            letterSpacing: 1.5, transition: "all 0.18s",
+            boxShadow: matching ? "none" : "0 0 20px rgba(202,253,0,0.25)",
+            opacity: matching ? 0.7 : 1,
+          }}>
+            {matching ? "FINDING YOUR PEOPLE..." : "⚡ FIND MY MATCHES"}
+          </button>
         </div>
 
         {/* Stat pills — 2x2 grid on mobile */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: "1.5rem" }}>
           {[
-            { label: "Meetings", value: "7", color: "#cafd00" },
-            { label: "Zaps sent", value: "21 ⚡", color: "#cafd00" },
-            { label: "Reputation", value: "98%", color: "#9d7bb8" },
-            { label: "Sats saved", value: "4,200", color: "#cafd00" },
+            { label: "Meetings", value: stats.meetings.toString(), color: "#cafd00" },
+            { label: "Zaps sent", value: stats.zaps > 0 ? `${stats.zaps} ⚡` : "0", color: "#cafd00" },
+            { label: "Reputation", value: `${stats.reputation}%`, color: "#9d7bb8" },
+            { label: "Sats saved", value: stats.satsSaved > 0 ? stats.satsSaved.toLocaleString() : "0", color: "#cafd00" },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ padding: "10px 14px", borderRadius: 14, border: "1px solid #1a1a18", background: "#111110", display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={{ color: "#888", fontSize: 10, fontWeight: 600, letterSpacing: 0.5 }}>{label}</span>
@@ -408,9 +517,25 @@ export default function MatchesPage() {
 
         {/* Match cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {MATCHES.map((m, i) => (
-            <MatchCard key={m.id} match={m} focused={focusedIndex === i} />
-          ))}
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 12px #cafd00", animation: "pulse 1s ease-in-out infinite", margin: "0 auto" }} />
+              <style>{`@keyframes pulse{0%,100%{opacity:0.4}50%{opacity:1}}`}</style>
+            </div>
+          ) : matches.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "48px 24px", borderRadius: 20, border: "1px solid #1a1a18", background: "#111110" }}>
+              <p style={{ fontSize: 32, margin: "0 0 12px" }}>⚡</p>
+              <p style={{ color: "#fff", fontWeight: 700, fontSize: 18, margin: "0 0 8px" }}>No matches yet</p>
+              <p style={{ color: "#666", fontSize: 14, margin: "0 0 20px", lineHeight: 1.6 }}>Hit the button above to let AI find your people. You need at least one other profile in the system.</p>
+              <button onClick={runMatching} disabled={matching} style={{ padding: "12px 24px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 20px rgba(202,253,0,0.25)" }}>
+                {matching ? "SEARCHING..." : "⚡ FIND MY MATCHES"}
+              </button>
+            </div>
+          ) : (
+            matches.map((m, i) => (
+              <MatchCard key={m.id} match={m} focused={focusedIndex === i} />
+            ))
+          )}
         </div>
 
         {/* Keyboard hint */}
