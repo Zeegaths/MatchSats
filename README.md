@@ -1,161 +1,86 @@
-# MatchSats ⚡
+# KYA Signal
 
-> **AI Matchmaking + Lightning Escrow for Conferences.**
-> Built in Africa, for Africa.
+Bitcoin-anchored cross-chain agent reputation. Portable. Permissionless. Verified.
 
----
+## What it does
 
-## The Problem
+KYA Signal is a portable reputation layer for autonomous agents. It indexes agent behavior across Solana and Ethereum, normalizes it into a 0–100 score using a versioned, hash-committed config, and settles that score on Bitcoin via Stacks. Any protocol queries any agent — no whitelist, no partnership required.
 
-Conferences are expensive and wasted. Visibility gaps make it impossible to find the 1% of people who matter. Passive tools — WhatsApp groups, badge scans — fail because no-shows are free. There's no skin in the game.
+The Mezo integration gates MUSD borrowing LTV directly from the on-chain score:
 
-## The Solution
+| Score | Status | LTV |
+|-------|--------|-----|
+| 0–84 | Base | 60% |
+| 85–94 | KYA Verified | 80% |
+| 95–100 | KYA Premium | 90% |
 
-MatchSats introduces **Economic Integrity** to networking.
+## Architecture
 
-- **AI finds the match** — semantic analysis of your Nostr profile, skills, and intent
-- **Bitcoin Lightning Escrow ensures the follow-through** — both parties lock sats before the meeting. Show up, get refunded. Ghost, and they keep your sats.
+Two Clarity contracts on Stacks: `kya-score` handles score storage, dispute flags, and Bitcoin anchoring. `mezo-lender-query` handles LTV gating with rate limiting, synced from `kya-score`.
 
-> *"Remove Bitcoin and you have an app a VC already built. Keep it and you have something nobody else has shipped."*
+The backend has chain listeners for Solana (vault rebalances, liquidations) and Ethereum (Aave supply/liquidation events), a versioned normalization engine with config hashing, a Stacks oracle that submits scores on-chain, a Redis TTL cache (scores 60s, LTV responses 30s), a Fastify REST API, and Zepto Mail alert templates.
 
----
+The frontend has a landing page, agent registration flow, live score dashboard with chain breakdown, full audit trail with hash verification, dispute management, public read-only agent scorecard, and normalization config version history.
 
-## How It Works
+## Setup
 
+Requires Node.js 20+, PostgreSQL (or [Neon](https://neon.tech)), and Redis (or [Upstash](https://upstash.com)).
+
+```bash
+git clone https://github.com/Zeegaths/KYA-Signal
+
+# Backend
+cd kya-signal/backend
+npm install
+cp .env.example .env
+npx prisma migrate dev --name init
+npx tsx src/seed.ts
+npm run dev
+
+# Frontend (separate terminal)
+cd kya-signal/frontend
+npm install
+cp .env.example .env.local
+npm run dev
 ```
-1. Scan in via LNURL-auth       → your Lightning wallet is your identity
-2. Define your Digital Aura     → skills, intent, personality matrix
-3. Get AI-matched               → top 3 peers with IR-grade rationale
-4. Lock sats                    → both parties commit via Lightning hold invoice
-5. Meet                         → confirm attendance to release escrow
-6. Record & summarize           → Whisper transcription in English + Swahili
-```
 
----
-
-## Escrow State Machine
-
-The **Confirm** tap is the only signal. Ambiguity always resolves in the user's favour.
-
-| Scenario | Person A | Person B | Outcome | LNbits Action |
-|:---|:---|:---|:---|:---|
-| **Both Confirm** | Tapped | Tapped | Full Refund | `cancelInvoice` ×2 |
-| **A Confirms, B Silent** | Tapped | No Action | B Penalised | `settleInvoice(B)`, `cancel(A)` |
-| **Neither Confirms** | No Action | No Action | Full Refund | `cancelInvoice` ×2 (Timeout) |
-| **Explicit Dispute** | Tapped | Either | Manual Review | Freeze / Manual Resolution |
-
----
-
-## Tech Stack
-
-### Identity
-- **LNURL-auth** — passwordless, wallet-based identity via Lightning. No email. No password.
-
-### Escrow
-- **LNbits Hold Invoices** — state-machine driven via BullMQ. Never settlement-first.
-
-### Data Layer
-- **Nostr** — NIP-01 profiles, decentralised event storage. Events signed via NIP-07 or temporary session keys.
-
-### AI Engine
-- **OpenAI API** — semantic matching & meeting summarisation
-- **OpenAI Whisper** — Swahili-native audio transcription
-- **Masakhane / AfroXLMR** — Yoruba / Amharic / Hausa NLP routing
-
-### Frontend
-- **Next.js 15** (PWA-ready)
-- **Tailwind CSS**, Lucide React, Radix UI
-
-### Backend
-- **Node.js**, SQLite (minimal state tracking), BullMQ
-
----
-
-## Language & Regional Intelligence
-
-MatchSats is built for the African market and respects its linguistic complexity.
-
-- **Code-switching** — recognises Kenyan Swahili-English-Sheng mixing via `lingua-py` segment tagging before LLM routing
-- **Sentiment calibration** — AfriSenti-calibrated logic (e.g. *"Poa sana"* = high praise / Positive)
-- **Sovereign aesthetic** — the UI evokes institutional trust, not crypto-degen culture
-
----
+For Clarity contracts, install [Clarinet](https://github.com/hirosystems/clarinet), run `clarinet check` inside `contracts/`, then `clarinet deployments apply --testnet`. Copy the deployed address into `backend/.env` as `KYA_CONTRACT_ADDRESS`.
 
 ## API
 
-| Endpoint | Description |
-|:---|:---|
-| `POST /api/match` | Triggers OpenAI to analyse Nostr profiles, returns top 3 matches + rationale |
-| `POST /api/invoices` | Creates a Lightning hold invoice for a meeting commitment |
-| `POST /api/invoices/:id/confirm` | Confirms attendance, triggers escrow resolution |
+`POST /agents/register` — registers an agent, returns a deterministic GEID derived as `sha256(sourceChainKey:stacksKey)`.
 
----
+`GET /agents/:geid/score` — returns `normalizedScore`, `verified`, `premium`, `suggestedLtv`, `btcBlockHeight`, `configHash`, `rawInputsHash`. Cached 60s.
 
-## Pages
+`POST /protocol/query` — rate-limited to 20 queries per BTC block per protocol. Returns `{ verified: bool, suggestedLtv: uint }`.
 
-| Route | Description |
-|:---|:---|
-| `/` | Landing page |
-| `/login` | LNURL-auth wallet connect |
-| `/profile` | Define Your Digital Aura |
-| `/matches` | AI-matched peers, active meetings |
-| `/matches/[id]` | Match detail, lock sats flow |
-| `/matches/[id]/review` | Post-meeting confirmation, transcription, escrow resolution |
+`GET /agents/:geid/audit` — paginated event history with `configHash` and `rawInputsHash` per event.
 
----
+`POST /disputes` — flags a score event. `GET /disputes/:geid` — returns dispute history with status and resolution.
 
-## Development
+`GET /configs` and `GET /configs/:version` — all normalization config versions with their hashes.
 
-```bash
-# Install dependencies
-npm install
+## Verifying a score
 
-# Run dev server
-npm run dev
+Every score stores two hashes on-chain: `config_hash` proves which normalization weights produced the score, `raw_inputs_hash` proves which chain events were fed in. To verify, get the `configHash` from the audit trail, match it to a version at `GET /configs`, and re-run `sha256(JSON.stringify(weights))` yourself. The same hash is on the Stacks contract — no need to trust this API.
 
-# Type check
-npm run type-check
+## Design decisions
 
-# Run tests
-npx playwright test
-```
+- **GEID = sha256(sourceChainKey:stacksKey)** — deterministic, no DB lookup needed to verify identity
+- **Versioned normalization configs** — changing weights never invalidates old scores; each score is permanently attributable to the config that produced it
+- **raw_inputs_hash on-chain** — proves what data produced a score, not just that a score was submitted
+- **Rate limiting (20/BTC block)** — prevents fishing attacks on the protocol query endpoint
+- **Dispute mechanism** — agents flag inaccurate events on-chain; status flows OPEN → RESOLVED via contract owner
 
-### Standards
-- **Files** — kebab-case (`escrow-handler.ts`)
-- **Variables** — camelCase
-- **TypeScript** — strict mode, no `any`, interfaces for all Nostr event structures
-- **Security** — always use Hold Invoices, never settlement-first
-- **Tests** — Playwright for PWA mobile flow, unit tests for BullMQ state transitions
+## Services
 
----
-
-## Meeting Memory Flow
-
-```
-Audio recording
-    → OpenAI Whisper (transcription)
-    → lingua-py (language detection + segment tagging)
-    → AfroXLMR / OpenAI router (language-aware NLP)
-    → OpenAI Summariser
-    → Output in English + Swahili
-```
-
----
-
-## Contrast Scale (UI)
-
-| Role | Color |
-|:---|:---|
-| Headlines | `#fff` |
-| Body text | `#bbb` / `#aaa` |
-| Secondary | `#888` |
-| Labels | `#666` |
-| Dimmed | `#555` |
-
-Brand colors: `#cafd00` (lime) · `#9d7bb8` (purple) · `#0a0a0a` (background)
-
----
-
-## License
-
-Built in dada Hub. Powered by Lightning. ⚡
+| Service | Purpose |
+|---------|---------|
+| Stacks / Hiro | Bitcoin settlement, Clarity contracts |
+| Mezo | MUSD LTV integration |
+| Helius / QuickNode | Solana RPC |
+| Alchemy | Ethereum RPC |
+| Neon | Hosted Postgres |
+| Upstash | Hosted Redis |
+| Zepto Mail | Email alerts |
+| Vercel | Frontend deployment |
