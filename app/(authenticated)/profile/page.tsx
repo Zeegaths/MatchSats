@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const INTERESTS = [
@@ -79,8 +79,31 @@ export default function ProfileSetupPage() {
   const [needs, setNeeds] = useState("");
   const [vibeNote, setVibeNote] = useState("");
   const [lightningAddr, setLightningAddr] = useState("");
+  const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  // Auto-populate lightning address from Alby extension
+  useEffect(() => {
+    async function fetchAlbyAddr() {
+      try {
+        const webln = (window as any).webln;
+        if (!webln) return;
+        await webln.enable();
+        const info = await webln.getInfo();
+        if (info?.node?.alias) {
+          // Try to get lightning address from Alby account info
+        }
+        // Alby exposes lightning address via window.alby
+        const alby = (window as any).alby;
+        if (alby?.getAddress) {
+          const addr = await alby.getAddress();
+          if (addr) setLightningAddr(addr);
+        }
+      } catch {}
+    }
+    fetchAlbyAddr();
+  }, []);
 
   const toggleInterest = (i: number) =>
     setInterests(prev => prev.map((t, idx) => idx === i ? { ...t, active: !t.active } : t));
@@ -93,7 +116,7 @@ export default function ProfileSetupPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: "Anonymous Node",      // will add name field shortly
+          name: name || "Anonymous Node",
           core_vibe: selectedVibe,
           building: currentBuild,
           needs,
@@ -160,6 +183,20 @@ export default function ProfileSetupPage() {
             The engine is calibrating. Feed your essence into the node to optimize high-value peer connectivity.
           </p>
         </div>
+
+        {/* Name */}
+        {card(<>
+          {sectionLabel("YOUR NAME")}
+          <div style={{ background: "#0e0e0c", border: "1px solid #2a2a28", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ color: "#cafd00" }}>◈</span>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="What do people call you?"
+              style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 600, outline: "none" }}
+            />
+          </div>
+        </>)}
 
         {/* Personality Matrix */}
         {card(<>
@@ -239,16 +276,7 @@ export default function ProfileSetupPage() {
                 onFocus={e => e.currentTarget.style.borderColor = color + "60"}
                 onBlur={e => e.currentTarget.style.borderColor = "#2a2a28"}
               />
-              <style>{`textarea::placeholder { color: #666; }`}</style>
-              {label !== "VIBE CHECK" ? (
-                <button style={{ marginTop: 8, width: "100%", padding: "7px", borderRadius: 8, border: "1px solid #2a2a28", background: "transparent", color: "#666", fontFamily: "'Space Grotesk', sans-serif", fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>+ ADD MORE</button>
-              ) : (
-                <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
-                  {["#cafd00", "#9d7bb8", "#ff4444"].map((c, i) => (
-                    <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: c }} />
-                  ))}
-                </div>
-              )}
+              <style>{`textarea::placeholder { color: #888; font-style: normal; }`}</style>
             </div>
           ))}
         </div>
