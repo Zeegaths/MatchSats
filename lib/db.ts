@@ -2,18 +2,23 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 
-let _db: Database.Database | null = null;
-
-function getDb(): Database.Database {
-  if (_db) return _db;
+function createDb() {
   const dataDir = process.env.RENDER ? "/data" : process.cwd();
-  if (process.env.RENDER && !fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  } catch {
+    // Can't create dir at build time — use cwd as fallback
+    const fallback = path.join(process.cwd(), "matchsats.db");
+    return new Database(fallback);
   }
-  _db = new Database(path.join(dataDir, "matchsats.db"));
-  _db.pragma("journal_mode = WAL");
-  _db.pragma("foreign_keys = ON");
-  _db.exec(`
+
+  const db = new Database(path.join(dataDir, "matchsats.db"));
+  db.pragma("journal_mode = WAL");
+  db.pragma("foreign_keys = ON");
+  db.exec(`
     CREATE TABLE IF NOT EXISTS lnurl_challenges (k1 TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000));
     CREATE TABLE IF NOT EXISTS users (pubkey TEXT PRIMARY KEY, npub TEXT, created_at INTEGER NOT NULL, last_seen INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS profiles (pubkey TEXT PRIMARY KEY REFERENCES users(pubkey), name TEXT, role TEXT, location TEXT, bio TEXT, lightning_addr TEXT, building TEXT, needs TEXT, vibe TEXT, core_vibe TEXT, interests TEXT, personality TEXT, nostr_relays TEXT, lat REAL, lng REAL, updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000));
@@ -24,8 +29,9 @@ function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_matches_pubkey_a ON matches(pubkey_a);
     CREATE INDEX IF NOT EXISTS idx_matches_pubkey_b ON matches(pubkey_b);
   `);
-  _db.prepare(`DELETE FROM lnurl_challenges WHERE expires_at < ?`).run(Date.now());
-  return _db;
+  db.prepare(`DELETE FROM lnurl_challenges WHERE expires_at < ?`).run(Date.now());
+  return db;
 }
 
-export default getDb();
+const db = createDb();
+export default db;
