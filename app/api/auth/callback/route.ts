@@ -2,7 +2,7 @@
 // Verifies the wallet's signature and creates a session
 
 import { NextRequest, NextResponse } from "next/server";
-import { secp256k1 } from "@noble/curves/secp256k1";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import db from "@/lib/db";
