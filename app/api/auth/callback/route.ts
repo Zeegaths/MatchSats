@@ -45,24 +45,30 @@ export async function GET(request: NextRequest) {
   if (!challenge) {
     return NextResponse.json({ status: "ERROR", reason: "Invalid or expired challenge" }, { status: 401 });
   }
-  
-  // 3. Verify the secp256k1 signature
+
   try {
     const sigBytes = Buffer.from(sig, "hex");
     const msgBytes = Buffer.from(k1, "hex");
     const keyBytes = Buffer.from(key, "hex");
 
-    // Parse DER signature manually to get r and s
-    // DER format: 0x30 [total-len] 0x02 [r-len] [r] 0x02 [s-len] [s]
-    const rLen = sigBytes[3];
-    const r = sigBytes.slice(4, 4 + rLen);
-    const sLen = sigBytes[5 + rLen];
-    const s = sigBytes.slice(6 + rLen, 6 + rLen + sLen);
+    // Parse DER: 0x30 [len] 0x02 [rLen] [r...] 0x02 [sLen] [s...]
+    let offset = 2; // skip 0x30 and total length
+    offset++; // skip 0x02
+    const rLen = sigBytes[offset++];
+    const rBytes = sigBytes.slice(offset, offset + rLen);
+    offset += rLen;
+    offset++; // skip 0x02
+    const sLen = sigBytes[offset++];
+    const sBytes = sigBytes.slice(offset, offset + sLen);
 
-    // Pad r and s to 32 bytes each
-    const rPadded = Buffer.concat([Buffer.alloc(32 - r.length), r]);
-    const sPadded = Buffer.concat([Buffer.alloc(32 - s.length), s]);
-    const compactSig = Buffer.concat([rPadded, sPadded]);
+    // Strip leading zero (DER adds it for positive numbers > 0x7f)
+    const r = rBytes[0] === 0 ? rBytes.slice(1) : rBytes;
+    const s = sBytes[0] === 0 ? sBytes.slice(1) : sBytes;
+
+    const compactSig = Buffer.concat([
+      Buffer.concat([Buffer.alloc(32 - r.length), r]),
+      Buffer.concat([Buffer.alloc(32 - s.length), s]),
+    ]);
 
     const isValid = secp256k1.verify(compactSig, msgBytes, keyBytes);
     if (!isValid) {
@@ -72,6 +78,8 @@ export async function GET(request: NextRequest) {
     console.error("[callback] verify error:", err);
     return NextResponse.json({ status: "ERROR", reason: "Signature verification failed" }, { status: 401 });
   }
+
+  
   // 4. Mark challenge as used (prevent replay attacks)
   db.prepare(`UPDATE lnurl_challenges SET used = 1 WHERE k1 = ?`).run(k1);
 
