@@ -45,13 +45,26 @@ export async function GET(request: NextRequest) {
   if (!challenge) {
     return NextResponse.json({ status: "ERROR", reason: "Invalid or expired challenge" }, { status: 401 });
   }
-
+  
   // 3. Verify the secp256k1 signature
   try {
     const sigBytes = Buffer.from(sig, "hex");
     const msgBytes = Buffer.from(k1, "hex");
     const keyBytes = Buffer.from(key, "hex");
-    const isValid = secp256k1.verify(sigBytes, msgBytes, keyBytes);
+
+    // Parse DER signature manually to get r and s
+    // DER format: 0x30 [total-len] 0x02 [r-len] [r] 0x02 [s-len] [s]
+    const rLen = sigBytes[3];
+    const r = sigBytes.slice(4, 4 + rLen);
+    const sLen = sigBytes[5 + rLen];
+    const s = sigBytes.slice(6 + rLen, 6 + rLen + sLen);
+
+    // Pad r and s to 32 bytes each
+    const rPadded = Buffer.concat([Buffer.alloc(32 - r.length), r]);
+    const sPadded = Buffer.concat([Buffer.alloc(32 - s.length), s]);
+    const compactSig = Buffer.concat([rPadded, sPadded]);
+
+    const isValid = secp256k1.verify(compactSig, msgBytes, keyBytes);
     if (!isValid) {
       return NextResponse.json({ status: "ERROR", reason: "Invalid signature" }, { status: 401 });
     }
@@ -59,7 +72,6 @@ export async function GET(request: NextRequest) {
     console.error("[callback] verify error:", err);
     return NextResponse.json({ status: "ERROR", reason: "Signature verification failed" }, { status: 401 });
   }
-
   // 4. Mark challenge as used (prevent replay attacks)
   db.prepare(`UPDATE lnurl_challenges SET used = 1 WHERE k1 = ?`).run(k1);
 
