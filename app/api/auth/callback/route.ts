@@ -46,8 +46,12 @@ console.log("[callback] hit:", request.url);
   }
 
   // 3. Verify the secp256k1 signature
-  try {
-    const isValid = secp256k1.verify(sig, k1, key);
+ // 3. Verify the secp256k1 signature
+try {
+  const sigBytes = Uint8Array.from(Buffer.from(sig, "hex"));
+  const msgBytes = Uint8Array.from(Buffer.from(k1, "hex"));
+  const keyBytes = Uint8Array.from(Buffer.from(key, "hex"));
+  const isValid = secp256k1.verify(sigBytes, msgBytes, keyBytes);
     if (!isValid) {
       return NextResponse.json({ status: "ERROR", reason: "Invalid signature" }, { status: 401 });
     }

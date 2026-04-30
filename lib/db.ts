@@ -1,15 +1,17 @@
-// lib/db.ts
-// Single SQLite connection — imported by all API routes
-
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 
-const DB_PATH = process.env.NODE_ENV === "production"
-  ? "/data/matchsats.db"
-  : path.join(process.cwd(), "matchsats.db");
+function getDBPath() {
+  if (process.env.RENDER) {
+    const dir = "/data";
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return path.join(dir, "matchsats.db");
+  }
+  return path.join(process.cwd(), "matchsats.db");
+}
 
-const db = new Database(DB_PATH);
-
+const db = new Database(getDBPath());
 // Performance settings
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
