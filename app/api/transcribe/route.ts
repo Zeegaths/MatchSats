@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // app/api/transcribe/route.ts
 // Receives audio blob → Whisper → GPT summary in English + Swahili
 

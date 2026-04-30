@@ -1,17 +1,11 @@
 import Database from "better-sqlite3";
 import path from "path";
-import fs from "fs";
 
-function getDBPath() {
-  if (process.env.RENDER) {
-    const dir = "/data";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    return path.join(dir, "matchsats.db");
-  }
-  return path.join(process.cwd(), "matchsats.db");
-}
+const DB_PATH = process.env.RENDER
+  ? "/data/matchsats.db"
+  : path.join(process.cwd(), "matchsats.db");
 
-const db = new Database(getDBPath());
+const db = new Database(DB_PATH);
 // Performance settings
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // app/api/auth/lnurl/route.ts
 // Generates a fresh k1 challenge and returns it as a LNURL
 

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // app/api/auth/callback/route.ts
 // Verifies the wallet's signature and creates a session
 

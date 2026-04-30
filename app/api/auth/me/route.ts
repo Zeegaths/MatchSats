@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // app/api/auth/me/route.ts
 // Called by the login page to check if the wallet has signed in yet
 
