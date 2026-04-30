@@ -26,11 +26,11 @@ const SESSION_OPTIONS = {
 };
 
 export async function GET(request: NextRequest) {
-console.log("[callback] hit:", request.url);
+  console.log("[callback] hit:", request.url);
   const { searchParams } = new URL(request.url);
-  const k1  = searchParams.get("k1");
-  const sig  = searchParams.get("sig");
-  const key  = searchParams.get("key"); // hex pubkey from wallet
+  const k1 = searchParams.get("k1");
+  const sig = searchParams.get("sig");
+  const key = searchParams.get("key"); // hex pubkey from wallet
 
   // 1. Validate params
   if (!k1 || !sig || !key) {
@@ -47,16 +47,16 @@ console.log("[callback] hit:", request.url);
   }
 
   // 3. Verify the secp256k1 signature
- // 3. Verify the secp256k1 signature
-try {
-  const sigBytes = Uint8Array.from(Buffer.from(sig, "hex"));
-  const msgBytes = Uint8Array.from(Buffer.from(k1, "hex"));
-  const keyBytes = Uint8Array.from(Buffer.from(key, "hex"));
-  const isValid = secp256k1.verify(sigBytes, msgBytes, keyBytes);
+  try {
+    const sigBytes = Buffer.from(sig, "hex");
+    const msgBytes = Buffer.from(k1, "hex");
+    const keyBytes = Buffer.from(key, "hex");
+    const isValid = secp256k1.verify(sigBytes, msgBytes, keyBytes);
     if (!isValid) {
       return NextResponse.json({ status: "ERROR", reason: "Invalid signature" }, { status: 401 });
     }
-  } catch {
+  } catch (err) {
+    console.error("[callback] verify error:", err);
     return NextResponse.json({ status: "ERROR", reason: "Signature verification failed" }, { status: 401 });
   }
 
