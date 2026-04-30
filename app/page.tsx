@@ -114,7 +114,7 @@ function Hero() {
           </div>
 
           <h1 style={{ fontSize: mobile ? "clamp(40px, 12vw, 72px)" : "clamp(52px, 7vw, 96px)", fontWeight: 900, lineHeight: 1.05, margin: "0 0 16px" }}>
-            The right room<br /><span style={{ color: "#cafd00" }}>changes everything.</span>
+            Your People<br /><span style={{ color: "#cafd00" }}>Are here.</span>
           </h1>
 
           <p style={{ color: "#aaa", fontSize: mobile ? 15 : 17, lineHeight: 1.8, margin: "0 0 36px", maxWidth: mobile ? "100%" : 440 }}>
