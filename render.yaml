@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: matchsats
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+    disk:
+      name: matchsats-data
+      mountPath: /data
+      sizeGB: 1
