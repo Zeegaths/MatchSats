@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const INTERESTS = [
@@ -80,35 +80,18 @@ export default function ProfileSetupPage() {
   const [vibeNote, setVibeNote] = useState("");
   const [lightningAddr, setLightningAddr] = useState("");
   const [name, setName] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-
-  // Auto-populate lightning address from Alby extension
-  useEffect(() => {
-    async function fetchAlbyAddr() {
-      try {
-        const webln = (window as any).webln;
-        if (!webln) return;
-        await webln.enable();
-        const info = await webln.getInfo();
-        if (info?.node?.alias) {
-          // Try to get lightning address from Alby account info
-        }
-        // Alby exposes lightning address via window.alby
-        const alby = (window as any).alby;
-        if (alby?.getAddress) {
-          const addr = await alby.getAddress();
-          if (addr) setLightningAddr(addr);
-        }
-      } catch {}
-    }
-    fetchAlbyAddr();
-  }, []);
 
   const toggleInterest = (i: number) =>
     setInterests(prev => prev.map((t, idx) => idx === i ? { ...t, active: !t.active } : t));
 
   const handleSave = async () => {
+    if (!inviteCode.trim()) {
+      setSaveError("Conference code is required to get matched.");
+      return;
+    }
     setSaving(true);
     setSaveError("");
     try {
@@ -122,6 +105,7 @@ export default function ProfileSetupPage() {
           needs,
           vibe: vibeNote,
           lightning_addr: lightningAddr,
+          invite_code: inviteCode.trim().toUpperCase(),
           interests: interests.filter(t => t.active).map(t => t.label),
         }),
       });
@@ -292,6 +276,29 @@ export default function ProfileSetupPage() {
               placeholder="your@lightning.address"
               style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, outline: "none" }} />
           </div>
+        </div>
+
+        {/* Conference invite code */}
+        <div style={{ borderRadius: 20, border: "1px solid #cafd0030", background: "#cafd0008", padding: "20px", marginBottom: 12 }}>
+          {sectionLabel("CONFERENCE CODE")}
+          <p style={{ color: "#888", fontSize: 13, margin: "0 0 12px", lineHeight: 1.6 }}>
+            Enter the code from your conference organizer to get matched with people at your event.
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#0e0e0c", border: `1px solid ${inviteCode.length > 0 ? "#cafd0060" : "#cafd0030"}`, borderRadius: 10, padding: "10px 14px" }}>
+            <span style={{ color: "#cafd00", fontSize: 16 }}>🎟</span>
+            <input
+              value={inviteCode}
+              onChange={e => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="NAIROBI2025"
+              maxLength={20}
+              style={{ flex: 1, background: "transparent", border: "none", color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 700, outline: "none", letterSpacing: 2 }} />
+            {inviteCode.length > 0 && (
+              <span style={{ color: "#cafd00", fontSize: 14 }}>✓</span>
+            )}
+          </div>
+          <p style={{ color: "#ff6666", fontSize: 11, margin: "8px 0 0", display: inviteCode.length === 0 ? "block" : "none" }}>
+            ⚠ Required — you won't be matched without a conference code
+          </p>
         </div>
 
         {/* Broadcast notice */}

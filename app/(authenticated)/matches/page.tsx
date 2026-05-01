@@ -361,7 +361,14 @@ export default function MatchesPage() {
     }
   }
 
-  const activeMeetings = matches.filter(m => m.status !== "new");
+  const [showMenu, setShowMenu] = useState(false);
+
+  const handleDisconnect = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  };
+  
+  const activeMeetings = matches.filter(m => m.status !== "new"); 
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -424,10 +431,25 @@ export default function MatchesPage() {
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#9d7bb860"; e.currentTarget.style.color = "#9d7bb8"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a18"; e.currentTarget.style.color = "#666"; }}
           >?</button>
-          <div onClick={() => router.push("/profile")} style={{ width: 30, height: 30, borderRadius: "50%", background: "#9d7bb820", border: "1px solid #9d7bb840", display: "flex", alignItems: "center", justifyContent: "center", color: "#9d7bb8", fontWeight: 800, fontSize: 12, cursor: "pointer", transition: "all 0.18s" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "#9d7bb830"; e.currentTarget.style.boxShadow = "0 0 10px rgba(157,123,184,0.3)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "#9d7bb820"; e.currentTarget.style.boxShadow = "none"; }}
-          >S</div>
+          <div style={{ position: "relative" }}>
+            <div onClick={() => setShowMenu(m => !m)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#9d7bb820", border: "1px solid #9d7bb840", display: "flex", alignItems: "center", justifyContent: "center", color: "#9d7bb8", fontWeight: 800, fontSize: 12, cursor: "pointer", transition: "all 0.18s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#9d7bb830"; e.currentTarget.style.boxShadow = "0 0 10px rgba(157,123,184,0.3)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "#9d7bb820"; e.currentTarget.style.boxShadow = "none"; }}
+            >S</div>
+            {showMenu && (
+              <div style={{ position: "absolute", top: 36, right: 0, background: "#141412", border: "1px solid #2a2a28", borderRadius: 12, padding: "6px", minWidth: 160, zIndex: 50, boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
+                <button onClick={() => { setShowMenu(false); router.push("/profile"); }} style={{ width: "100%", padding: "9px 14px", borderRadius: 8, background: "transparent", border: "none", color: "#ccc", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#1e1e1c"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >⚙ Edit Profile</button>
+                <div style={{ height: 1, background: "#1e1e1c", margin: "4px 0" }} />
+                <button onClick={handleDisconnect} style={{ width: "100%", padding: "9px 14px", borderRadius: 8, background: "transparent", border: "none", color: "#ff6666", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#ff444415"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >⚡ Disconnect Wallet</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -524,12 +546,22 @@ export default function MatchesPage() {
             </div>
           ) : matches.length === 0 ? (
             <div style={{ textAlign: "center", padding: "48px 24px", borderRadius: 20, border: "1px solid #1a1a18", background: "#111110" }}>
-              <p style={{ fontSize: 32, margin: "0 0 12px" }}>⚡</p>
+              <p style={{ fontSize: 32, margin: "0 0 12px" }}>🎟</p>
               <p style={{ color: "#fff", fontWeight: 700, fontSize: 18, margin: "0 0 8px" }}>No matches yet</p>
-              <p style={{ color: "#666", fontSize: 14, margin: "0 0 20px", lineHeight: 1.6 }}>Hit the button above to let AI find your people. You need at least one other profile in the system.</p>
-              <button onClick={runMatching} disabled={matching} style={{ padding: "12px 24px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 20px rgba(202,253,0,0.25)" }}>
-                {matching ? "SEARCHING..." : "⚡ FIND MY MATCHES"}
-              </button>
+              <p style={{ color: "#666", fontSize: 14, margin: "0 0 8px", lineHeight: 1.6 }}>
+                Make sure you've added your conference code in your profile.
+              </p>
+              <p style={{ color: "#555", fontSize: 13, margin: "0 0 20px" }}>
+                Then hit Find My Matches to see who's here.
+              </p>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                <button onClick={() => router.push("/profile")} style={{ padding: "12px 20px", borderRadius: 99, background: "transparent", border: "1px solid #333", color: "#aaa", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: 1 }}>
+                  ⚙ Edit Profile
+                </button>
+                <button onClick={runMatching} disabled={matching} style={{ padding: "12px 24px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 20px rgba(202,253,0,0.25)" }}>
+                  {matching ? "SEARCHING..." : "⚡ FIND MY MATCHES"}
+                </button>
+              </div>
             </div>
           ) : (
             matches.map((m, i) => (
