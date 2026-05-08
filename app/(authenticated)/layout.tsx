@@ -1,6 +1,7 @@
 // app/(authenticated)/layout.tsx
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { cookies } from "next/headers";
 
 export default async function AuthenticatedLayout({
   children,
@@ -8,12 +9,10 @@ export default async function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
+  const cookieStore = await cookies();
+  const isGuest = cookieStore.get("matchsats_guest")?.value === "true";
 
-  // Guest mode — allow access without wallet
-  // Guest cookie is set client-side so we can't read it here
-  // We check the session instead — guests just won't have one
-
-  if (!session.isLoggedIn || !session.pubkey) {
+  if (!session.isLoggedIn && !isGuest) {
     redirect("/login");
   }
 

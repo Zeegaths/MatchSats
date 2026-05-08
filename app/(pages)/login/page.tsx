@@ -165,7 +165,7 @@ export default function LoginPage() {
   // ── Guest mode ────────────────────────────────────────────────────
   const continueAsGuest = () => {
     // Store guest flag — they can browse but can't lock sats
-    sessionStorage.setItem("matchsats_guest", "true");
+    document.cookie = "matchsats_guest=true; path=/; max-age=86400";
     router.push("/matches");
   };
 
