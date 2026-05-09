@@ -36,6 +36,14 @@ function InvoiceQR({ paymentRequest }: { paymentRequest: string }) {
   );
 }
 
+// ── Mock data for demo/guest mode ────────────────────────────────────
+const MOCK_MATCHES: Record<string, MatchData> = {
+  "1": { id: 1, name: "Amara O.", role: "Fintech Founder", location: "Lagos, Nigeria", initials: "A", score: 94, rationale: "She's building Lightning payment rails for merchants in West Africa. Your experience with Bitcoin infrastructure is a direct complement — there's a real product collaboration here.", status: "new", core_vibe: "Ship Mode", interests: ["#lightning", "#fintech", "#africa", "#bitcoin"], building: "Lightning payment rails for merchants across West Africa", needs: "Rust developer who knows Lightning internals", lightning_addr: null, escrow: { mine: null, theirs: null, both_locked: false } },
+  "2": { id: 2, name: "Dev X", role: "Rust Developer", location: "Nairobi, Kenya", initials: "D", score: 88, rationale: "Building cross-chain bridges in Rust. Your Lightning experience could accelerate their mainnet launch significantly — this is a technical co-founder type match.", status: "new", core_vibe: "Deep Work", interests: ["#rust", "#bitcoin", "#open-source"], building: "Cross-chain bridge infrastructure", needs: "Lightning Network expertise and testing support", lightning_addr: null, escrow: { mine: null, theirs: null, both_locked: false } },
+  "3": { id: 3, name: "Priya K.", role: "VC Associate", location: "Mumbai, India", initials: "P", score: 81, rationale: "Active in African crypto deals at exactly the stage you're at. She's looking for Bitcoin-native infrastructure plays — warm intro potential is very high.", status: "new", core_vibe: "Connector", interests: ["#venture-capital", "#defi", "#africa"], building: "Portfolio of African crypto infrastructure", needs: "Founders building Bitcoin-native tools in Africa", lightning_addr: null, escrow: { mine: null, theirs: null, both_locked: false } },
+  "4": { id: 4, name: "Kwame A.", role: "Protocol Engineer", location: "Accra, Ghana", initials: "K", score: 76, rationale: "Working on Nostr relay infrastructure. Your identity layer work is directly complementary — together you could build the missing social layer for Bitcoin in Africa.", status: "new", core_vibe: "Builder", interests: ["#nostr", "#bitcoin", "#full-stack"], building: "Nostr relay infrastructure for Africa", needs: "Lightning integration expertise", lightning_addr: null, escrow: { mine: null, theirs: null, both_locked: false } },
+};
+
 export default function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = React.use(params);
@@ -47,16 +55,23 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const [paymentHash, setPaymentHash] = useState("");
   const [lockError, setLockError] = useState("");
   const [checking, setChecking] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   // Fetch real match data
   useEffect(() => {
     async function load() {
       try {
         const res = await fetch(`/api/match/${id}`);
-        if (!res.ok) { router.push("/matches"); return; }
+        if (!res.ok) {
+          // Fallback to mock data for guests/demo
+          const mock = MOCK_MATCHES[id] ?? MOCK_MATCHES["1"];
+          setMatch(mock);
+          setIsGuest(true);
+          setLoading(false);
+          return;
+        }
         const data = await res.json();
         setMatch(data);
-        // If already locked, show locked state
         if (data.escrow.mine === "held") setLockStep("locked");
       } catch {
         router.push("/matches");
@@ -87,6 +102,12 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleLockSats = async () => {
     if (!match) return;
+    if (isGuest) {
+      // Show a demo invoice QR for presentation purposes
+      setPaymentRequest("lnbc21000n1pnqqqqqqpp5qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhp5qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcqpjsp5qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9qxpqysgqdemo");
+      setLockStep("invoice");
+      return;
+    }
     setLockStep("creating");
     setLockError("");
     try {
@@ -211,6 +232,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         {/* Invoice QR */}
         {lockStep === "invoice" && (
           <div style={{ borderRadius: 20, border: "1px solid #cafd0030", background: "#111110", padding: "24px", marginBottom: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, animation: "slideUp 0.3s ease" }}>
+            {isGuest && <span style={{ background: "#cafd0015", border: "1px solid #cafd0040", color: "#cafd00", fontSize: 10, fontWeight: 700, padding: "4px 12px", borderRadius: 99, letterSpacing: 2 }}>DEMO MODE</span>}
             <p style={{ color: "#cafd00", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: 0 }}>SCAN TO LOCK 2,100 SATS</p>
             <InvoiceQR paymentRequest={paymentRequest} />
             {/* Pay with Alby if available */}
