@@ -3,23 +3,47 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const INTERESTS = [
-  { label: "#rustling", active: false },
+const BITCOIN_INTERESTS = [
   { label: "#bitcoin", active: true },
-  { label: "#generative-art", active: false },
+  { label: "#lightning", active: true },
+  { label: "#nostr", active: false },
+  { label: "#open-source", active: false },
+  { label: "#rust", active: false },
+  { label: "#zero-knowledge", active: false },
+  { label: "#privacy", active: false },
+  { label: "#devops", active: false },
+  { label: "#web-design", active: false },
+  { label: "#ai-agents", active: false },
+  { label: "#smart-contracts", active: false },
+  { label: "#defi", active: false },
+  { label: "#hardware", active: false },
   { label: "#macro-economics", active: false },
   { label: "#cybersecurity", active: false },
-  { label: "#smart-contracts", active: false },
-  { label: "#gaming", active: true, purple: true },
-  { label: "#solana", active: false },
-  { label: "#ai-agents", active: false },
-  { label: "#zero-knowledge", active: false },
-  { label: "#defi", active: true },
-  { label: "#nostr", active: false },
-  { label: "#lightning", active: true },
-  { label: "#open-source", active: false },
-  { label: "#hardware", active: false },
+  { label: "#generative-art", active: false },
+  { label: "#gaming", active: false },
 ];
+
+const SOULMATE_INTERESTS = [
+  { label: "#coffee-first", active: false },
+  { label: "#night-owl", active: false },
+  { label: "#early-riser", active: false },
+  { label: "#dog-person", active: false },
+  { label: "#cat-person", active: false },
+  { label: "#foodie", active: false },
+  { label: "#traveller", active: false },
+  { label: "#homebody", active: false },
+  { label: "#bookworm", active: false },
+  { label: "#gym-rat", active: false },
+  { label: "#creative", active: false },
+  { label: "#adventurous", active: false },
+  { label: "#ambitious", active: false },
+  { label: "#laid-back", active: false },
+  { label: "#hopeless-romantic", active: false },
+  { label: "#plant-parent", active: false },
+];
+
+// keep INTERESTS as alias for bitcoin
+const INTERESTS = BITCOIN_INTERESTS;
 
 const CORE_VIBES = [
   { label: "Hyper-Focused", icon: "◎" },
@@ -28,25 +52,46 @@ const CORE_VIBES = [
   { label: "Ship Mode", icon: "🚀" },
 ];
 
-const PERSONALITY_AXES = [
-  { left: "I RECHARGE ALONE", right: "I RECHARGE WITH PEOPLE", default: 60 },
-  { left: "I GO DEEP ON ONE THING", right: "I JUGGLE MANY THINGS", default: 35 },
-  { left: "I FIGURE THINGS OUT", right: "I FIND WHAT ALREADY WORKS", default: 50 },
-  { left: "I BET BIG, MOVE FAST", right: "I MEASURE, THEN MOVE", default: 45 },
-  { left: "I PREFER MESSAGES", right: "I PREFER MEETINGS", default: 40 },
+const ROLE_TAGS = [
+  { label: "Builder",     icon: "⚡" },
+  { label: "Community",   icon: "🌱" },
+  { label: "Investor",    icon: "💰" },
+  { label: "Researcher",  icon: "🔬" },
+  { label: "Artist",      icon: "🎨" },
+  { label: "Enthusiast",  icon: "🔥" },
+  { label: "Operator",    icon: "⚙" },
+  { label: "Journalist",  icon: "✍" },
 ];
 
-function MatrixSlider({ left, right, defaultVal }: { left: string; right: string; defaultVal: number }) {
+const PERSONALITY_AXES = [
+  { left: "Introvert", right: "Extrovert", key: "energy", default: 50 },
+  { left: "Creating something", right: "Learning and connecting", key: "purpose", default: 50 },
+  { left: "Technical depth", right: "Big picture and narrative", key: "thinking", default: 50 },
+  { left: "Independent", right: "Collaborative", key: "working", default: 50 },
+  { left: "Just getting started", right: "Been in this a long time", key: "journey", default: 50 },
+];
+
+function MatrixSlider({ left, right, defaultVal, onChange }: { left: string; right: string; defaultVal: number; onChange?: (v: number) => void }) {
   const [val, setVal] = useState(defaultVal);
+  const isLeft = val < 40;
+  const isRight = val > 60;
+  const isMiddle = !isLeft && !isRight;
+
+  const handleChange = (v: number) => {
+    setVal(v);
+    onChange?.(v);
+  };
+
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
-        <span style={{ color: val < 50 ? "#cafd00" : "#444", fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", lineHeight: 1.4, maxWidth: "44%", transition: "color 0.2s" }}>{left}</span>
-        <span style={{ color: val >= 50 ? "#cafd00" : "#444", fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", lineHeight: 1.4, textAlign: "right", maxWidth: "44%", transition: "color 0.2s" }}>{right}</span>
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ color: isLeft ? "#cafd00" : "#444", fontSize: 13, fontWeight: isLeft ? 700 : 500, lineHeight: 1.3, maxWidth: "40%", transition: "all 0.2s" }}>{left}</span>
+        {isMiddle && <span style={{ color: "#777", fontSize: 11, fontWeight: 600, textAlign: "center", flexShrink: 0 }}>both, honestly</span>}
+        <span style={{ color: isRight ? "#cafd00" : "#444", fontSize: 13, fontWeight: isRight ? 700 : 500, lineHeight: 1.3, textAlign: "right", maxWidth: "40%", transition: "all 0.2s" }}>{right}</span>
       </div>
       <div style={{ position: "relative", height: 4, background: "#1e1e1c", borderRadius: 99 }}>
-        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${val}%`, background: "linear-gradient(90deg, #9d7bb840, #cafd00)", borderRadius: 99, transition: "width 0.05s" }} />
-        <input type="range" min={0} max={100} value={val} onChange={e => setVal(Number(e.target.value))}
+        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${val}%`, background: isMiddle ? "linear-gradient(90deg, #9d7bb8, #cafd00)" : "linear-gradient(90deg, #9d7bb840, #cafd00)", borderRadius: 99, transition: "width 0.05s" }} />
+        <input type="range" min={0} max={100} value={val} onChange={e => handleChange(Number(e.target.value))}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", margin: 0 }} />
         <div style={{ position: "absolute", top: "50%", left: `${val}%`, transform: "translate(-50%, -50%)", width: 16, height: 16, borderRadius: "50%", background: "#cafd00", border: "2px solid #0a0a0a", boxShadow: "0 0 12px rgba(202,253,0,0.7)", pointerEvents: "none", transition: "left 0.05s" }} />
       </div>
@@ -54,27 +99,29 @@ function MatrixSlider({ left, right, defaultVal }: { left: string; right: string
   );
 }
 
-function InterestTag({ label, active, purple, onToggle }: { label: string; active: boolean; purple?: boolean; onToggle: () => void }) {
-  const color = purple ? "#9d7bb8" : "#cafd00";
+function InterestTag({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) {
   return (
     <button onClick={onToggle} style={{
-      padding: "7px 14px", borderRadius: 99, cursor: "pointer",
-      border: active ? `1px solid ${color}` : "1px solid #2a2a28",
-      background: active ? `${color}18` : "transparent",
-      color: active ? color : "#777",
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontWeight: active ? 700 : 400, fontSize: 12,
-      transition: "all 0.15s ease",
-    }}>
-      {label}
-    </button>
+      padding: "8px 16px", borderRadius: 99, cursor: "pointer",
+      fontSize: 13, fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif",
+      transition: "all 0.18s",
+      border: active ? "1px solid #cafd00" : "1px solid rgba(255,255,255,0.08)",
+      background: active ? "#cafd0018" : "rgba(255,255,255,0.04)",
+      color: active ? "#cafd00" : "#ccc",
+      backdropFilter: "blur(8px)",
+      boxShadow: active ? "0 0 12px rgba(202,253,0,0.15), inset 0 1px 0 rgba(202,253,0,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+    }}>{label}</button>
   );
 }
 
 export default function ProfileSetupPage() {
   const router = useRouter();
-  const [interests, setInterests] = useState(INTERESTS);
+  const [interests, setInterests] = useState(BITCOIN_INTERESTS);
+  const [soulmateInterests, setSoulmateInterests] = useState(SOULMATE_INTERESTS);
+  const [interestTab, setInterestTab] = useState<"bitcoin" | "soulmate">("bitcoin");
   const [selectedVibe, setSelectedVibe] = useState("Hyper-Focused");
+  const [selectedRole, setSelectedRole] = useState("");
+  const [personalityVals, setPersonalityVals] = useState<Record<string, number>>({});
   const [currentBuild, setCurrentBuild] = useState("");
   const [needs, setNeeds] = useState("");
   const [vibeNote, setVibeNote] = useState("");
@@ -88,10 +135,6 @@ export default function ProfileSetupPage() {
     setInterests(prev => prev.map((t, idx) => idx === i ? { ...t, active: !t.active } : t));
 
   const handleSave = async () => {
-    if (!inviteCode.trim()) {
-      setSaveError("Conference code is required to get matched.");
-      return;
-    }
     setSaving(true);
     setSaveError("");
     try {
@@ -101,12 +144,15 @@ export default function ProfileSetupPage() {
         body: JSON.stringify({
           name: name || "Anonymous Node",
           core_vibe: selectedVibe,
+          role: selectedRole,
           building: currentBuild,
           needs,
           vibe: vibeNote,
           lightning_addr: lightningAddr,
           invite_code: inviteCode.trim().toUpperCase(),
           interests: interests.filter(t => t.active).map(t => t.label),
+          soulmate_interests: soulmateInterests.filter(t => t.active).map(t => t.label),
+          personality: { ...personalityVals, role: selectedRole },
         }),
       });
       const data = await res.json();
@@ -184,10 +230,42 @@ export default function ProfileSetupPage() {
 
         {/* Personality Matrix */}
         {card(<>
-          {sectionLabel("PERSONALITY MATRIX")}
+          {sectionLabel("YOUR VIBE")}
+          <p style={{ color: "#666", fontSize: 13, margin: "0 0 20px", lineHeight: 1.6 }}>Drag each one to where you actually sit. Middle is fine.</p>
           {PERSONALITY_AXES.map((axis, i) => (
-            <MatrixSlider key={i} left={axis.left} right={axis.right} defaultVal={axis.default} />
+            <MatrixSlider
+              key={i}
+              left={axis.left}
+              right={axis.right}
+              defaultVal={axis.default}
+              onChange={v => setPersonalityVals(prev => ({ ...prev, [axis.key]: v }))}
+            />
           ))}
+        </>)}
+
+        {/* Role tag */}
+        {card(<>
+          {sectionLabel("I AM PRIMARILY A...")}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+            {ROLE_TAGS.map(r => {
+              const active = selectedRole === r.label;
+              return (
+                <button key={r.label} onClick={() => setSelectedRole(r.label)} style={{
+                  padding: "12px 8px", borderRadius: 14, cursor: "pointer",
+                  border: active ? "1px solid #cafd0060" : "1px solid #1e1e1c",
+                  background: active ? "#cafd0010" : "#0e0e0e",
+                  color: active ? "#cafd00" : "#666",
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontWeight: 700, fontSize: 11, textAlign: "center",
+                  transition: "all 0.18s",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                }}>
+                  <span style={{ fontSize: 20 }}>{r.icon}</span>
+                  <span>{r.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </>)}
 
         {/* Core Vibe */}
@@ -217,25 +295,79 @@ export default function ProfileSetupPage() {
 
         {/* Interests Mesh */}
         {card(<>
-          {sectionLabel("INTERESTS MESH")}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {interests.map((tag, i) => (
-              <InterestTag key={tag.label} label={tag.label} active={tag.active} purple={tag.purple} onToggle={() => toggleInterest(i)} />
-            ))}
+          {/* Tab header */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            <button onClick={() => setInterestTab("bitcoin")} style={{
+              padding: "7px 16px", borderRadius: 99, border: "none", cursor: "pointer",
+              background: interestTab === "bitcoin" ? "#cafd00" : "transparent",
+              color: interestTab === "bitcoin" ? "#1a2200" : "#555",
+              fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 12,
+              letterSpacing: 1, transition: "all 0.18s",
+            }}>⚡ BITCOIN</button>
+            <button onClick={() => setInterestTab("soulmate")} style={{
+              padding: "7px 16px", borderRadius: 99, border: interestTab === "soulmate" ? "none" : "1px solid #2a2a28", cursor: "pointer",
+              background: interestTab === "soulmate" ? "#9d7bb8" : "transparent",
+              color: interestTab === "soulmate" ? "#fff" : "#555",
+              fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 12,
+              letterSpacing: 1, transition: "all 0.18s",
+              display: "flex", alignItems: "center", gap: 6,
+            }}>
+              💜 SOULMATE
+              <span style={{ background: "#ff6b9d", color: "#fff", fontSize: 8, fontWeight: 800, padding: "2px 6px", borderRadius: 99, letterSpacing: 1 }}>NEW</span>
+            </button>
           </div>
-          <p style={{ color: "#555", fontSize: 11, margin: "14px 0 0" }}>
-            {interests.filter(t => t.active).length} signals active
-          </p>
+
+          {interestTab === "bitcoin" ? (
+            <>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {interests.map((tag, i) => (
+                  <InterestTag key={tag.label} label={tag.label} active={tag.active}
+                    onToggle={() => setInterests(prev => prev.map((t, idx) => idx === i ? { ...t, active: !t.active } : t))} />
+                ))}
+              </div>
+              <p style={{ color: "#555", fontSize: 11, margin: "14px 0 0" }}>
+                {interests.filter(t => t.active).length} signals active
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ color: "#9d7bb8", fontSize: 12, margin: "0 0 12px", fontStyle: "italic" }}>
+                Who are you beyond the tech? Help us find your people.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {soulmateInterests.map((tag, i) => (
+                  <button key={tag.label} onClick={() => setSoulmateInterests(prev => prev.map((t, idx) => idx === i ? { ...t, active: !t.active } : t))}
+                    style={{
+                      padding: "8px 16px", borderRadius: 99, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                      fontFamily: "'Space Grotesk', sans-serif", transition: "all 0.18s",
+                      border: tag.active ? "1px solid #9d7bb8" : "1px solid rgba(255,255,255,0.08)",
+                      background: tag.active ? "rgba(157,123,184,0.15)" : "rgba(255,255,255,0.04)",
+                      color: tag.active ? "#c4a0e8" : "#ccc",
+                      backdropFilter: "blur(8px)",
+                      boxShadow: tag.active ? "0 0 12px rgba(157,123,184,0.2), inset 0 1px 0 rgba(157,123,184,0.15)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                    }}
+                  >{tag.label}</button>
+                ))}
+              </div>
+              <p style={{ color: "#555", fontSize: 11, margin: "14px 0 0" }}>
+                {soulmateInterests.filter(t => t.active).length} vibes selected
+              </p>
+            </>
+          )}
         </>)}
 
-        {/* Building / Needs / Vibe Check */}
+        {/* Building / Needs / Vibe Check — changes based on active tab */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 12 }}>
-          {[
+          {(interestTab === "bitcoin" ? [
             { icon: "⚡", label: "BUILDING", color: "#cafd00", value: currentBuild, set: setCurrentBuild, placeholder: "What are you building right now?", italic: false },
             { icon: "◈", label: "NEEDS", color: "#9d7bb8", value: needs, set: setNeeds, placeholder: "What kind of person are you looking for?", italic: false },
             { icon: "👁️", label: "VIBE CHECK", color: "#fff", value: vibeNote, set: setVibeNote, placeholder: "Who do you love working with? Describe the energy.", italic: true },
-          ].map(({ icon, label, color, value, set, placeholder, italic }) => (
-            <div key={label} style={{ borderRadius: 20, border: "1px solid #2a2a28", background: "#141412", padding: "20px" }}>
+          ] : [
+            { icon: "✨", label: "ABOUT ME", color: "#c4a0e8", value: currentBuild, set: setCurrentBuild, placeholder: "What should someone know about you before saying hi?", italic: false },
+            { icon: "💜", label: "LOOKING FOR", color: "#9d7bb8", value: needs, set: setNeeds, placeholder: "Describe your ideal person in three words.", italic: false },
+            { icon: "🌙", label: "FIRST CONVERSATION", color: "#c4a0e8", value: vibeNote, set: setVibeNote, placeholder: "What does a great first conversation feel like to you?", italic: true },
+          ]).map(({ icon, label, color, value, set, placeholder, italic }) => (
+            <div key={label} style={{ borderRadius: 20, border: `1px solid ${interestTab === "soulmate" ? "#9d7bb830" : "#2a2a28"}`, background: interestTab === "soulmate" ? "rgba(157,123,184,0.05)" : "#141412", padding: "20px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                 <span style={{ fontSize: 14 }}>{icon}</span>
                 <p style={{ color, fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: 0 }}>{label}</p>
@@ -279,32 +411,30 @@ export default function ProfileSetupPage() {
         </div>
 
         {/* Conference invite code */}
-        <div style={{ borderRadius: 20, border: "1px solid #cafd0030", background: "#cafd0008", padding: "20px", marginBottom: 12 }}>
-          {sectionLabel("CONFERENCE CODE")}
-          <p style={{ color: "#888", fontSize: 13, margin: "0 0 12px", lineHeight: 1.6 }}>
-            Enter the code from your conference organizer to get matched with people at your event.
+        <div style={{ borderRadius: 20, border: `1px solid ${inviteCode.length > 0 ? "#cafd0050" : "#cafd0020"}`, background: inviteCode.length > 0 ? "#cafd0008" : "#0e0e0c", padding: "20px", marginBottom: 12, transition: "all 0.2s" }}>
+          {sectionLabel("EVENT CODE")}
+          <p style={{ color: "#777", fontSize: 13, margin: "0 0 12px", lineHeight: 1.6 }}>
+            This scopes your matches to people at the same event. Ask your organizer if you don't have one.
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#0e0e0c", border: `1px solid ${inviteCode.length > 0 ? "#cafd0060" : "#cafd0030"}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#080808", border: `1px solid ${inviteCode.length > 0 ? "#cafd0040" : "#1e1e1c"}`, borderRadius: 10, padding: "12px 16px", transition: "all 0.2s" }}>
             <span style={{ color: "#cafd00", fontSize: 16 }}>🎟</span>
             <input
               value={inviteCode}
               onChange={e => setInviteCode(e.target.value.toUpperCase())}
-              placeholder="NAIROBI2025"
+              placeholder="e.g. NAI5"
               maxLength={20}
-              style={{ flex: 1, background: "transparent", border: "none", color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 700, outline: "none", letterSpacing: 2 }} />
+              style={{ flex: 1, background: "transparent", border: "none", color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 800, outline: "none", letterSpacing: 3 }} />
             {inviteCode.length > 0 && (
-              <span style={{ color: "#cafd00", fontSize: 14 }}>✓</span>
+              <span style={{ color: "#cafd00", fontSize: 16 }}>✓</span>
             )}
           </div>
-          <p style={{ color: "#ff6666", fontSize: 11, margin: "8px 0 0", display: inviteCode.length === 0 ? "block" : "none" }}>
-            ⚠ Required — you won't be matched without a conference code
-          </p>
+          {inviteCode.length === 0 && (
+            <p style={{ color: "#555", fontSize: 11, margin: "8px 0 0" }}>
+              No code? You can still build your profile — add it later before matching.
+            </p>
+          )}
         </div>
 
-        {/* Broadcast notice */}
-        <p style={{ color: "#444", fontSize: 12, textAlign: "center", margin: "0 0 20px" }}>
-          ◈ Changes will be broadcast to the Neon-Node instantly upon synchronization.
-        </p>
       </div>
 
       {/* Floating bottom bar */}

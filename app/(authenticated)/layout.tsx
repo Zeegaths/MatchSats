@@ -1,7 +1,5 @@
-// app/(authenticated)/layout.tsx
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { cookies } from "next/headers";
 
 export default async function AuthenticatedLayout({
   children,
@@ -9,10 +7,8 @@ export default async function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  const cookieStore = await cookies();
-  const isGuest = cookieStore.get("matchsats_guest")?.value === "true";
 
-  if (!session.isLoggedIn && !isGuest) {
+  if (!session.isLoggedIn || !session.userId) {
     redirect("/login");
   }
 

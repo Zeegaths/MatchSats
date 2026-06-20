@@ -1,18 +1,19 @@
-export const dynamic = "force-dynamic";
 // app/api/auth/me/route.ts
-// Called by the login page to check if the wallet has signed in yet
-
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
 export async function GET() {
   const session = await getSession();
-  if (!session.isLoggedIn || !session.pubkey) {
+  if (!session.isLoggedIn) {
     return NextResponse.json({ loggedIn: false });
   }
   return NextResponse.json({
     loggedIn: true,
-    pubkey: session.pubkey,
-    npub: session.npub,
+    userId: session.userId,
+    username: session.username,
+    eventCode: session.eventCode,
+    pubkey: session.pubkey ?? null,
+    hasWallet: !!session.pubkey,
   });
 }
