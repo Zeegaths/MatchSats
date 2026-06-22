@@ -5,10 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export interface SessionData {
   isLoggedIn: boolean;
-  userId: string;       // username:eventcode combo — unique identity
+  userId: string;
   username: string;
   eventCode: string;
-  pubkey?: string;      // only set if user connected a Lightning wallet
+  pubkey?: string;
   npub?: string;
 }
 
@@ -19,7 +19,7 @@ export const SESSION_OPTIONS = {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "lax" as const,
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * 30, // 30 days
   },
 };
 

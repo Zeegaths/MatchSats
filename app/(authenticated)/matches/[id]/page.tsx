@@ -152,7 +152,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
           onMouseEnter={e => { e.currentTarget.style.color = "#aaa"; e.currentTarget.style.borderColor = "#333"; }}
           onMouseLeave={e => { e.currentTarget.style.color = "#666"; e.currentTarget.style.borderColor = "#1e1e1c"; }}
         >← BACK</button>
-        <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 13, letterSpacing: 2 }}>MATCHSATS</span>
+        <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: -0.5 }}><span style={{ color: "#cafd00" }}>1</span><span style={{ color: "#9d7bb8" }}>%</span></span>
       </div>
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "1.5rem 1.25rem" }}>

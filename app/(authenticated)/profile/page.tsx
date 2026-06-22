@@ -125,7 +125,6 @@ export default function ProfileSetupPage() {
   const [currentBuild, setCurrentBuild] = useState("");
   const [needs, setNeeds] = useState("");
   const [vibeNote, setVibeNote] = useState("");
-  const [lightningAddr, setLightningAddr] = useState("");
   const [name, setName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [saving, setSaving] = useState(false);
@@ -148,7 +147,6 @@ export default function ProfileSetupPage() {
           building: currentBuild,
           needs,
           vibe: vibeNote,
-          lightning_addr: lightningAddr,
           invite_code: inviteCode.trim().toUpperCase(),
           interests: interests.filter(t => t.active).map(t => t.label),
           soulmate_interests: soulmateInterests.filter(t => t.active).map(t => t.label),
@@ -191,7 +189,7 @@ export default function ProfileSetupPage() {
           <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#cafd0020", border: "1px solid #cafd0040", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="12" height="14" viewBox="0 0 44 50" fill="none"><path d="M26 4L8 28H22L16 46L38 20H24L26 4Z" fill="#cafd00"/></svg>
           </div>
-          <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 13, letterSpacing: 2 }}>MATCHSATS</span>
+          <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 13, letterSpacing: 2 }}>1%</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 6px #cafd00" }} />
@@ -395,19 +393,6 @@ export default function ProfileSetupPage() {
               <style>{`textarea::placeholder { color: #888; font-style: normal; }`}</style>
             </div>
           ))}
-        </div>
-
-        {/* Lightning node */}
-        <div style={{ borderRadius: 20, border: "1px solid #2a2a28", background: "#141412", padding: "20px", marginBottom: 12 }}>
-          {sectionLabel("LIGHTNING NODE")}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#0e0e0c", border: "1px solid #2a2a28", borderRadius: 10, padding: "10px 14px" }}>
-            <span style={{ color: "#cafd00", fontSize: 16 }}>⚡</span>
-            <input
-              value={lightningAddr}
-              onChange={e => setLightningAddr(e.target.value)}
-              placeholder="your@lightning.address"
-              style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, outline: "none" }} />
-          </div>
         </div>
 
         {/* Conference invite code */}

@@ -1,8 +1,8 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// ── Matrix rain background ────────────────────────────────────────────
 function MatrixRain() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -10,12 +10,12 @@ function MatrixRain() {
     const ctx = c.getContext("2d"); if (!ctx) return;
     const resize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
     resize(); window.addEventListener("resize", resize);
-    const chars = "アイウエカキ01⚡₿BTC10";
+    const chars = "01⚡₿10アイウカキ";
     const cols = Math.floor(c.width / 18);
     const drops = Array(cols).fill(1);
     const draw = () => {
-      ctx.fillStyle = "rgba(14,14,14,0.07)"; ctx.fillRect(0, 0, c.width, c.height);
-      ctx.fillStyle = "rgba(202,253,0,0.055)"; ctx.font = "12px Courier New";
+      ctx.fillStyle = "rgba(10,10,10,0.08)"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = "rgba(202,253,0,0.04)"; ctx.font = "12px Courier New";
       drops.forEach((y, i) => {
         ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 18, y * 18);
         if (y * 18 > c.height && Math.random() > 0.975) drops[i] = 0;
@@ -28,254 +28,213 @@ function MatrixRain() {
   return <canvas ref={ref} style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }} />;
 }
 
-function NeuralSun({ size = 300 }: { size?: number }) {
+// ── Pulsing orb ───────────────────────────────────────────────────────
+function Orb({ size = 280 }: { size?: number }) {
   return (
     <div style={{ position: "relative", width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <div style={{ position: "absolute", width: size, height: size, borderRadius: "50%", border: "1px dashed rgba(202,253,0,0.07)", animation: "nspin 40s linear infinite" }} />
-      <div style={{ position: "absolute", width: size * 0.83, height: size * 0.83, borderRadius: "50%", border: "1.5px solid rgba(157,123,184,0.35)", animation: "nspin 25s linear infinite reverse", boxShadow: "0 0 20px rgba(157,123,184,0.15)" }} />
-      <div style={{ position: "absolute", width: size * 0.78, height: size * 0.78, borderRadius: "50%", boxShadow: "0 0 0 3px #cafd00, 0 0 35px 10px rgba(202,253,0,0.55), 0 0 90px 25px rgba(202,253,0,0.12)", animation: "nglow 2.5s ease-in-out infinite" }} />
-      <div style={{ width: size * 0.73, height: size * 0.73, borderRadius: "50%", background: "radial-gradient(circle at 38% 38%, #181808, #060606)", border: "1px solid rgba(202,253,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 2, overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "repeating-conic-gradient(rgba(202,253,0,0.025) 0deg 2deg, transparent 2deg 7deg)" }} />
-        <svg width={size * 0.22} height={size * 0.25} viewBox="0 0 44 50" fill="none" style={{ position: "relative", zIndex: 1 }}>
-          <path d="M26 4L8 28H22L16 46L38 20H24L26 4Z" fill="#cafd00" style={{ filter: "drop-shadow(0 0 10px rgba(202,253,0,0.9))" }} />
-        </svg>
-        <div style={{ position: "absolute", bottom: "11%", left: "50%", transform: "translateX(-50%)", background: "rgba(10,10,10,0.9)", border: "1px solid rgba(202,253,0,0.3)", borderRadius: 99, padding: "2px 9px", whiteSpace: "nowrap" }}>
-          <span style={{ color: "#cafd00", fontSize: 7, fontWeight: 700, letterSpacing: 1 }}>PULSE INTEGRITY: 99.98%</span>
-        </div>
+      <div style={{ position: "absolute", width: size, height: size, borderRadius: "50%", border: "1px dashed rgba(202,253,0,0.06)", animation: "spin 40s linear infinite" }} />
+      <div style={{ position: "absolute", width: size * 0.83, height: size * 0.83, borderRadius: "50%", border: "1.5px solid rgba(157,123,184,0.3)", animation: "spin 25s linear infinite reverse", boxShadow: "0 0 20px rgba(157,123,184,0.12)" }} />
+      <div style={{ position: "absolute", width: size * 0.78, height: size * 0.78, borderRadius: "50%", boxShadow: "0 0 0 3px #cafd00, 0 0 35px 10px rgba(202,253,0,0.5), 0 0 90px 25px rgba(202,253,0,0.1)", animation: "glow 2.5s ease-in-out infinite" }} />
+      <div style={{ width: size * 0.72, height: size * 0.72, borderRadius: "50%", background: "radial-gradient(circle at 38% 38%, #181808, #060606)", border: "1px solid rgba(202,253,0,0.06)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 2 }}>
+        <span style={{ fontWeight: 900, fontSize: size * 0.32, letterSpacing: -4, lineHeight: 1, userSelect: "none" as const }}>
+          <span style={{ color: "#cafd00", textShadow: "0 0 20px rgba(202,253,0,0.8)" }}>1</span><span style={{ color: "#9d7bb8", textShadow: "0 0 20px rgba(157,123,184,0.8)" }}>%</span>
+        </span>
       </div>
-      <div style={{ position: "absolute", width: size * 0.84, height: size * 0.84, borderRadius: "50%", border: "1px solid rgba(202,253,0,0.12)", animation: "nping 2.5s ease-out infinite" }} />
-      <div style={{ position: "absolute", width: size * 0.72, height: size * 0.72, borderRadius: "50%", border: "1px solid rgba(202,253,0,0.08)", animation: "nping 2.5s ease-out infinite 0.7s" }} />
-      <div style={{ position: "absolute", top: "2%", right: "-2%", background: "rgba(18,18,14,0.93)", backdropFilter: "blur(8px)", border: "1px solid rgba(73,72,71,0.4)", borderRadius: 20, padding: "6px 12px", display: "flex", alignItems: "center", gap: 7, zIndex: 3, whiteSpace: "nowrap" }}>
-        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 6px #cafd00" }} />
-        <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>LIVE FLOW: 2.4 BTC/S</span>
-      </div>
-      <div style={{ position: "absolute", bottom: "10%", left: "-4%", background: "rgba(157,123,184,0.2)", backdropFilter: "blur(8px)", border: "1px solid rgba(157,123,184,0.5)", borderRadius: 20, padding: "6px 12px", display: "flex", alignItems: "center", gap: 7, zIndex: 3, whiteSpace: "nowrap" }}>
-        <span style={{ color: "#c4a0e8", fontSize: 11 }}>◈</span>
-        <span style={{ color: "#c4a0e8", fontSize: 10, fontWeight: 700 }}>ACTIVE NODES: 14,209</span>
-      </div>
+      <div style={{ position: "absolute", width: size * 0.84, height: size * 0.84, borderRadius: "50%", border: "1px solid rgba(202,253,0,0.1)", animation: "ping 2.5s ease-out infinite" }} />
+      <div style={{ position: "absolute", width: size * 0.72, height: size * 0.72, borderRadius: "50%", border: "1px solid rgba(202,253,0,0.06)", animation: "ping 2.5s ease-out infinite 0.7s" }} />
       <style>{`
-        @keyframes nspin{to{transform:rotate(360deg)}}
-        @keyframes nping{0%{transform:scale(1);opacity:0.4}100%{transform:scale(1.3);opacity:0}}
-        @keyframes nglow{0%,100%{box-shadow:0 0 0 3px #cafd00,0 0 35px 10px rgba(202,253,0,0.55),0 0 90px 25px rgba(202,253,0,0.12)}50%{box-shadow:0 0 0 3px #cafd00,0 0 55px 16px rgba(202,253,0,0.75),0 0 110px 35px rgba(202,253,0,0.2)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes ping{0%{transform:scale(1);opacity:0.4}100%{transform:scale(1.3);opacity:0}}
+        @keyframes glow{0%,100%{box-shadow:0 0 0 3px #cafd00,0 0 35px 10px rgba(202,253,0,0.5),0 0 90px 25px rgba(202,253,0,0.1)}50%{box-shadow:0 0 0 3px #cafd00,0 0 55px 16px rgba(202,253,0,0.7),0 0 110px 35px rgba(202,253,0,0.18)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse2{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+        @keyframes drop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
         @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-        @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
       `}</style>
     </div>
   );
 }
 
+// ── Mobile hook ───────────────────────────────────────────────────────
 function useIsMobile() {
-  const [mobile, setMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setMobile(window.innerWidth < 768);
-    check(); window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-  return mobile;
+  const [m, setM] = useState(false);
+  useEffect(() => { const c = () => setM(window.innerWidth < 768); c(); window.addEventListener("resize", c); return () => window.removeEventListener("resize", c); }, []);
+  return m;
 }
 
-function Header() {
+// ── Events data (real only) ───────────────────────────────────────────
+const EVENTS = [
+  { name: "Nairobi Bitcoin Conference", location: "ASK Dome, Nairobi", date: "June 24-26, 2025", spots: 48 },
+];
+
+// ── Nav ───────────────────────────────────────────────────────────────
+function Nav() {
   const router = useRouter();
   const mobile = useIsMobile();
+  const [scrolled, setScrolled] = useState(false);
+  const [showEvents, setShowEvents] = useState(false);
+  useEffect(() => { const fn = () => setScrolled(window.scrollY > 40); window.addEventListener("scroll", fn); return () => window.removeEventListener("scroll", fn); }, []);
+
   return (
-    <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "rgba(14,14,14,0.88)", backdropFilter: "blur(16px)", borderBottom: "1px solid #111110", padding: mobile ? "0.9rem 1.25rem" : "1rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 15, letterSpacing: 2 }}>MATCHSATS</span>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        {!mobile && (
-          <button onClick={() => router.push("/matches")} style={{ padding: "9px 20px", borderRadius: 99, background: "transparent", border: "1px solid #222", color: "#555", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.18s" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#222"; e.currentTarget.style.color = "#555"; }}
-          >EXPLORE</button>
-        )}
-        <button onClick={() => router.push("/login")} style={{ padding: mobile ? "8px 16px" : "9px 22px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 12, cursor: "pointer", letterSpacing: 1, boxShadow: "0 0 20px rgba(202,253,0,0.2)" }}>
-          {mobile ? "JOIN" : "FIND YOUR PEOPLE"}
-        </button>
+    <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: mobile ? "0 20px" : "0 40px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", background: scrolled ? "rgba(10,10,10,0.96)" : "transparent", backdropFilter: scrolled ? "blur(20px)" : "none", borderBottom: scrolled ? "1px solid #1a1a18" : "none", transition: "all 0.3s" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => window.scrollTo(0,0)}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#cafd0015", border: "1.5px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>⚡</div>
       </div>
-    </header>
+
+      {!mobile && (
+        <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+          <a href="#how" style={{ color: "#777", fontSize: 14, fontWeight: 500, textDecoration: "none", transition: "color 0.18s", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color="#fff"} onMouseLeave={e => e.currentTarget.style.color="#777"}>How It Works</a>
+          <a href="#for-you" style={{ color: "#777", fontSize: 14, fontWeight: 500, textDecoration: "none", transition: "color 0.18s", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color="#fff"} onMouseLeave={e => e.currentTarget.style.color="#777"}>For Everyone</a>
+          <a href="#organizers" style={{ color: "#777", fontSize: 14, fontWeight: 500, textDecoration: "none", transition: "color 0.18s", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color="#fff"} onMouseLeave={e => e.currentTarget.style.color="#777"}>Organizers</a>
+
+          {/* Events dropdown */}
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setShowEvents(v => !v)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 99, border: `1px solid ${showEvents ? "#cafd0040" : "#2a2a28"}`, background: showEvents ? "#cafd0010" : "transparent", color: showEvents ? "#cafd00" : "#777", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.18s" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#cafd00", animation: "pulse2 2s ease-in-out infinite" }} />
+              Events
+              <span style={{ fontSize: 9, opacity: 0.5 }}>{showEvents ? "▲" : "▼"}</span>
+            </button>
+            {showEvents && (
+              <div style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, background: "#111110", border: "1px solid #1e1e1c", borderRadius: 16, padding: 8, minWidth: 320, boxShadow: "0 20px 60px rgba(0,0,0,0.8)", animation: "drop 0.2s ease", zIndex: 100 }}>
+                {EVENTS.map((ev, i) => (
+                  <div key={i} onClick={() => { setShowEvents(false); router.push("/login"); }} style={{ padding: "14px 16px", borderRadius: 10, cursor: "pointer", transition: "background 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(202,253,0,0.05)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <p style={{ fontWeight: 700, fontSize: 14, color: "#fff", margin: 0 }}>{ev.name}</p>
+                      <span style={{ color: "#cafd00", fontSize: 11, fontWeight: 700 }}>{ev.spots} spots</span>
+                    </div>
+                    <p style={{ color: "#555", fontSize: 12, margin: 0 }}>{ev.location} · {ev.date}</p>
+                  </div>
+                ))}
+                <div style={{ padding: "10px 16px 4px", borderTop: "1px solid #1a1a18", marginTop: 4 }}>
+                  <p style={{ color: "#444", fontSize: 12, margin: 0 }}>Organising an event? <span style={{ color: "#9d7bb8", cursor: "pointer" }} onClick={() => { setShowEvents(false); router.push("/login"); }}>Set one up here.</span></p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {!mobile && <button onClick={() => router.push("/login")} style={{ background: "none", border: "none", color: "#777", fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "8px 16px", transition: "color 0.18s" }} onMouseEnter={e => e.currentTarget.style.color="#fff"} onMouseLeave={e => e.currentTarget.style.color="#777"}>Log in</button>}
+        <button onClick={() => router.push("/login")} style={{ background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 800, cursor: "pointer", padding: mobile ? "9px 16px" : "10px 20px", borderRadius: 99, transition: "all 0.18s", boxShadow: "0 0 20px rgba(202,253,0,0.15)" }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 0 28px rgba(202,253,0,0.3)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 0 20px rgba(202,253,0,0.15)"; }}
+        >{mobile ? "Join" : "Join an Event"}</button>
+      </div>
+    </nav>
   );
 }
 
+// ── Hero ──────────────────────────────────────────────────────────────
 function Hero() {
   const router = useRouter();
   const mobile = useIsMobile();
-  const orbSize = mobile ? 220 : 300;
-
   return (
     <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? "90px 20px 60px" : "100px 40px 60px", overflow: "hidden" }}>
       <MatrixRain />
-      <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translate(-50%,-50%)", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(202,253,0,0.04) 0%, transparent 70%)", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", top: "50%", right: "10%", transform: "translateY(-50%)", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(157,123,184,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translate(-50%,-50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(202,253,0,0.03) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 48 : 80, alignItems: "center", maxWidth: 1280, width: "100%" }}>
-        <div style={{ flex: 1, textAlign: mobile ? "center" : "left", animation: "fu 0.6s ease both" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(157,123,184,0.12)", border: "1px solid rgba(157,123,184,0.4)", borderRadius: 99, padding: "5px 14px", marginBottom: 28 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#9d7bb8", boxShadow: "0 0 8px #9d7bb8" }} />
-            <span style={{ color: "#c4a0e8", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>PROOF OF PRESENCE</span>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 40 : 80, alignItems: "center", maxWidth: 1200, width: "100%" }}>
+
+        {/* Left */}
+        <div style={{ flex: 1, textAlign: mobile ? "center" : "left", animation: "fadeUp 0.6s ease both" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(202,253,0,0.08)", border: "1px solid rgba(202,253,0,0.25)", borderRadius: 99, padding: "5px 14px", marginBottom: 24 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#cafd00", animation: "pulse2 2s ease-in-out infinite" }} />
+            <span style={{ color: "#cafd00", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>NAIROBI BITCOIN CONFERENCE · JUNE 24-26</span>
           </div>
 
-          <h1 style={{ fontSize: mobile ? "clamp(40px, 12vw, 72px)" : "clamp(52px, 7vw, 96px)", fontWeight: 900, lineHeight: 1.05, margin: "0 0 16px" }}>
-            Your People<br /><span style={{ color: "#cafd00" }}>Are here.</span>
+          <h1 style={{ fontSize: mobile ? "clamp(42px,12vw,72px)" : "clamp(52px,7vw,88px)", fontWeight: 900, lineHeight: 1.0, margin: "0 0 20px", letterSpacing: -2 }}>
+            Find your<br /><span style={{ color: "#cafd00" }}>people.</span>
           </h1>
 
-          <p style={{ color: "#aaa", fontSize: mobile ? 15 : 17, lineHeight: 1.8, margin: "0 0 36px", maxWidth: mobile ? "100%" : 440 }}>
-            Meet the people who actually move things forward —
-            designers, founders, storytellers, builders.<br />
-            <span style={{ color: "#777" }}>AI matches you by what matters. Sats make sure everyone shows up.</span>
+          <p style={{ color: "#999", fontSize: mobile ? 15 : 17, lineHeight: 1.8, margin: "0 0 32px", maxWidth: 420 }}>
+            At every event, 1% of the room will change your life. The hard part is finding them in a crowd of hundreds. We do that for you.
           </p>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: mobile ? "center" : "flex-start" }}>
-            <button onClick={() => router.push("/login")} style={{ padding: "15px 30px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2, boxShadow: "0 0 36px rgba(202,253,0,0.3)", textTransform: "uppercase", transition: "opacity 0.18s" }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
-              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-            >FIND YOUR PEOPLE</button>
-            <button onClick={() => router.push("/matches")} style={{ padding: "15px 30px", borderRadius: 99, background: "transparent", border: "1px solid #2a2a28", color: "#666", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: 2, transition: "all 0.2s", textTransform: "uppercase" }}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: mobile ? "center" : "flex-start", marginBottom: 36 }}>
+            <button onClick={() => router.push("/login")} style={{ padding: "14px 28px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 0 28px rgba(202,253,0,0.25)", transition: "all 0.18s" }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+            >Join the Conference</button>
+            <button onClick={() => router.push("/login")} style={{ padding: "14px 28px", borderRadius: 99, background: "transparent", border: "1px solid #2a2a28", color: "#aaa", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", transition: "all 0.18s" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#666"; }}
-            >EXPLORE</button>
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#aaa"; }}
+            >Create an Event</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: mobile ? "center" : "flex-start" }}>
+            {["Founders", "Investors", "Builders", "Designers", "Artists", "Everyone"].map(t => (
+              <span key={t} style={{ padding: "5px 12px", borderRadius: 99, border: "1px solid #1e1e1c", background: "rgba(255,255,255,0.03)", color: "#666", fontSize: 13 }}>{t}</span>
+            ))}
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "center", flexShrink: 0, animation: "fu 0.8s ease both 0.15s" }}>
-          <NeuralSun size={orbSize} />
+        {/* Right — Orb + Event card */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, flexShrink: 0, animation: "fadeUp 0.8s ease both 0.15s" }}>
+          <Orb size={mobile ? 200 : 260} />
+
+          {/* Event card */}
+          <div style={{ background: "rgba(14,14,12,0.9)", backdropFilter: "blur(20px)", border: "1px solid #1e1e1c", borderRadius: 20, padding: "20px 22px", width: mobile ? "100%" : 280, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div>
+                <p style={{ color: "#444", fontSize: 9, fontWeight: 700, letterSpacing: 2, margin: "0 0 3px" }}>NEXT EVENT</p>
+                <p style={{ color: "#fff", fontSize: 14, fontWeight: 700, margin: 0 }}>Nairobi Bitcoin Conf.</p>
+              </div>
+              <div style={{ background: "#cafd0012", border: "1px solid #cafd0030", borderRadius: 99, padding: "3px 10px" }}>
+                <p style={{ color: "#cafd00", fontSize: 10, fontWeight: 700, margin: 0 }}>48 spots</p>
+              </div>
+            </div>
+            <div style={{ height: 1, background: "#181816", marginBottom: 14 }} />
+            <p style={{ color: "#555", fontSize: 12, margin: "0 0 8px" }}>ASK Dome · June 24-26, 2025</p>
+            <button onClick={() => router.push("/login")} style={{ width: "100%", padding: "10px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
+              Register to join
+            </button>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
+// ── Scrolling marquee ─────────────────────────────────────────────────
 function Marquee() {
-  const text = "THE GRID NEVER SLEEPS • SHOW UP, GET REFUNDED • REAL CONNECTIONS, REAL STAKES • INTENTIONAL NETWORKS • MEET YOUR PEOPLE • ";
+  const text = "FIND YOUR PEOPLE • SHOW UP • BUILD SOMETHING REAL • INTENTIONAL NETWORKING • 1% OF THE ROOM • ";
   return (
-    <div style={{ borderTop: "1px solid #111110", borderBottom: "1px solid #111110", overflow: "hidden", padding: "16px 0" }}>
-      <div style={{ display: "flex", animation: "marquee 28s linear infinite", width: "max-content" }}>
+    <div style={{ borderTop: "1px solid #111110", borderBottom: "1px solid #111110", overflow: "hidden", padding: "14px 0" }}>
+      <div style={{ display: "flex", animation: "marquee 30s linear infinite", width: "max-content" }}>
         {[text, text, text].map((t, i) => (
-          <span key={i} style={{ color: "rgba(255,255,255,0.045)", fontWeight: 900, fontSize: "clamp(56px,9vw,110px)", letterSpacing: -3, textTransform: "uppercase", whiteSpace: "nowrap" }}>{t}</span>
+          <span key={i} style={{ color: "rgba(255,255,255,0.04)", fontWeight: 900, fontSize: "clamp(48px,8vw,96px)", letterSpacing: -2, textTransform: "uppercase", whiteSpace: "nowrap" }}>{t}</span>
         ))}
       </div>
     </div>
   );
 }
 
-function BentoGrid() {
+// ── How it works ──────────────────────────────────────────────────────
+function HowItWorks() {
   const mobile = useIsMobile();
   return (
-    <section style={{ padding: mobile ? "48px 20px" : "64px 40px", maxWidth: 1280, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(3, 1fr)", gap: 14 }}>
-        {/* Glass stat card */}
-        <div style={{ borderRadius: 24, padding: "36px", minHeight: 180, background: "linear-gradient(135deg, #141412 60%, #1a1020 100%)", border: "1px solid rgba(157,123,184,0.15)", backdropFilter: "blur(20px)", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "radial-gradient(circle, rgba(157,123,184,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -20, left: -20, width: 100, height: 100, borderRadius: "50%", background: "radial-gradient(circle, rgba(202,253,0,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
-            <svg width="28" height="28" viewBox="0 0 36 36"><path d="M18 2L34 11V25L18 34L2 25V11L18 2Z" fill="none" stroke="#9d7bb8" strokeWidth="1.5"/><path d="M21 10L13 20H19L15 30L27 18H20L21 10Z" fill="#cafd00"/></svg>
-            <span style={{ color: "#9d7bb8", fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>SHOW RATE</span>
-          </div>
-          <div style={{ position: "relative" }}>
-            <p style={{ color: "#cafd00", fontWeight: 900, fontSize: mobile ? 52 : 64, margin: "0 0 4px", lineHeight: 1, textShadow: "0 0 30px rgba(202,253,0,0.3)" }}>99.9%</p>
-            <p style={{ color: "#9d7bb8", fontSize: 11, margin: 0, letterSpacing: 1 }}>people actually show up · imagine that</p>
-          </div>
-          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 1, background: "linear-gradient(90deg, transparent, rgba(157,123,184,0.3), transparent)" }} />
-        </div>
-
-        {/* No-shows solved */}
-        <div style={{ borderRadius: 24, background: "#141412", border: "1px solid #1e1e1c", padding: "36px" }}>
-          <h3 style={{ color: "#fff", fontWeight: 900, fontSize: 24, margin: "0 0 12px", lineHeight: 1.2 }}>No more<br />no-shows.</h3>
-          <p style={{ color: "#bbb", fontSize: 14, lineHeight: 1.75, margin: "0 0 20px" }}>Both sides put skin in the game before the meeting. Show up and get fully refunded. Simple as that.</p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {["SHOW UP ✓", "GET REFUNDED ✓"].map(t => (
-              <span key={t} style={{ border: "1px solid #3a3a38", borderRadius: 99, padding: "5px 12px", color: "#888", fontSize: 10, fontWeight: 700, letterSpacing: 1 }}>{t}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Ghost rate */}
-        <div style={{ borderRadius: 24, background: "#0e0e0e", border: "1px solid #1a1a18", padding: "36px" }}>
-          <p style={{ color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 3, margin: "0 0 12px" }}>GHOST RATE</p>
-          <p style={{ color: "#cafd00", fontWeight: 900, fontSize: mobile ? 52 : 60, margin: "0 0 8px", lineHeight: 1 }}>0%</p>
-          <p style={{ color: "#bbb", fontSize: 13, margin: 0, lineHeight: 1.6 }}>turns out accountability is a great feature.</p>
-        </div>
-
-        {/* Matched by what matters */}
-        <div style={{ borderRadius: 24, background: "#111110", border: "1px solid #1a1a18", padding: "36px", gridColumn: mobile ? "1" : "1 / span 3" } as React.CSSProperties}>
-          <h3 style={{ color: "#cafd00", fontWeight: 900, fontSize: 26, margin: "0 0 12px" }}>Matched by what actually matters.</h3>
-          <p style={{ color: "#bbb", fontSize: 14, lineHeight: 1.75, margin: "0 0 20px", maxWidth: 560 }}>Not job titles. Not badge colours. Our matching reads what you're building, what you need, and who's in the room — then gives you your top 3 with a real reason why.</p>
-          <div style={{ maxWidth: 400, display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ height: 6, background: "#1e1e1c", borderRadius: 99, overflow: "hidden" }}><div style={{ height: "100%", width: "75%", background: "#cafd00", borderRadius: 99, boxShadow: "0 0 8px rgba(202,253,0,0.35)" }} /></div>
-            <div style={{ height: 6, background: "#1e1e1c", borderRadius: 99, overflow: "hidden" }}><div style={{ height: "100%", width: "50%", background: "#9d7bb8", borderRadius: 99 }} /></div>
-          </div>
-        </div>
+    <section id="how" style={{ padding: mobile ? "64px 20px" : "80px 40px", maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 52 }}>
+        <p style={{ color: "#9d7bb8", fontSize: 10, fontWeight: 700, letterSpacing: 3, marginBottom: 14 }}>HOW IT WORKS</p>
+        <h2 style={{ fontSize: mobile ? "clamp(28px,8vw,44px)" : "clamp(32px,4vw,52px)", fontWeight: 900, letterSpacing: -1.5, lineHeight: 1.1, margin: 0 }}>Three steps to a real connection.</h2>
       </div>
-    </section>
-  );
-}
-
-const PERSONALITIES = [
-  {
-    tag: "THE MAKER",
-    headline: "You build things\npeople actually use.",
-    sub: "Developer, designer, or somewhere in between — you make things real. We'll find the people who need exactly what you make.",
-    bg: "#0e0e0a", headColor: "#fff", subColor: "#bbb", tagColor: "#cafd00", tagBg: "rgba(202,253,0,0.12)", border: "rgba(202,253,0,0.3)", glow: "#cafd00", glass: true,
-  },
-  {
-    tag: "THE CONNECTOR",
-    headline: "You know everyone\nworth knowing.",
-    sub: "Your superpower is introductions. MatchSats makes sure those intros actually turn into something that lasts.",
-    bg: "#0c0a10", headColor: "#fff", subColor: "#bbb", tagColor: "#9d7bb8", tagBg: "rgba(157,123,184,0.15)", border: "rgba(157,123,184,0.3)", glow: "#9d7bb8",
-  },
-  {
-    tag: "THE CAPITAL",
-    headline: "You back the things\nthat matter.",
-    sub: "Whether you write cheques, open doors, or bring resources — you're looking for the 1% worth betting on. So are they.",
-    bg: "#100808", headColor: "#fff", subColor: "#bbb", tagColor: "#ff8080", tagBg: "rgba(255,68,68,0.12)", border: "rgba(255,68,68,0.25)", glow: "#ff4444",
-  },
-  {
-    tag: "THE CATALYST",
-    headline: "You make rooms\ncome alive.",
-    sub: "Community builder, marketer, storyteller — you're the reason people remember a conference. We need more of you in the room.",
-    bg: "#0a0e06", headColor: "#fff", subColor: "#bbb", tagColor: "#cafd00", tagBg: "rgba(202,253,0,0.1)", border: "rgba(202,253,0,0.2)", glow: "#cafd00",
-  },
-];
-
-function PersonalityGrid() {
-  const router = useRouter();
-  const mobile = useIsMobile();
-  return (
-    <section style={{ padding: mobile ? "48px 20px" : "64px 40px", maxWidth: 1280, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-      <div style={{ textAlign: "center", marginBottom: 48 }}>
-        <p style={{ color: "#555", fontSize: 11, fontWeight: 700, letterSpacing: 4, margin: "0 0 14px" }}>EVERYONE'S WELCOME</p>
-        <h2 style={{ fontSize: mobile ? "clamp(30px,8vw,48px)" : "clamp(36px,5vw,64px)", fontWeight: 900, lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
-          What kind of person<br /><span style={{ color: "#cafd00" }}>are you?</span>
-        </h2>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(2, 1fr)", gap: 14 }}>
-        {PERSONALITIES.map((p, i) => (
-          <div key={p.tag} onClick={() => router.push("/login")} style={{
-            borderRadius: 24, background: p.bg,
-            border: `1px solid ${p.border ?? "transparent"}`,
-            padding: "32px 28px", position: "relative", overflow: "hidden", cursor: "pointer",
-            animation: "fu 0.5s ease both", animationDelay: `${i * 0.08}s`,
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-            boxShadow: `0 0 0 1px ${(p as any).glow ?? "#cafd00"}18, inset 0 0 60px rgba(0,0,0,0.4)`,
-            backdropFilter: "blur(20px)",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = `0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px ${(p as any).glow ?? "#cafd00"}40, 0 0 30px ${(p as any).glow ?? "#cafd00"}15`; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = `0 0 0 1px ${(p as any).glow ?? "#cafd00"}18, inset 0 0 60px rgba(0,0,0,0.4)`; }}
+      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(3,1fr)", gap: 14 }}>
+        {[
+          { icon: "🧠", color: "#cafd00", title: "We find your match", desc: "Tell us what you care about and what you are looking for. We read every profile at your event and find the three people you should actually meet." },
+          { icon: "💬", color: "#9d7bb8", title: "You start a conversation", desc: "Chat with your match before you meet in person. Suggest a time, find a spot, or just see if the energy is right." },
+          { icon: "🤝", color: "#9d7bb8", title: "You both show up", desc: "Both of you confirm the meeting happened. No ghosting, no forgotten cards, no connection request that goes nowhere." },
+        ].map((f, i) => (
+          <div key={i} style={{ borderRadius: 20, padding: "28px", border: "1px solid #1a1a18", background: "#0e0e0c", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a18"; e.currentTarget.style.transform = "translateY(0)"; }}
           >
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${(p as any).glow ?? "#cafd00"}, transparent)`, opacity: 0.6, pointerEvents: "none" }} />
-            <div style={{ position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: `radial-gradient(circle, ${(p as any).glow ?? "#cafd00"}20 0%, transparent 70%)`, pointerEvents: "none" }} />
-            {(p as any).glass && (
-              <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 10px)", pointerEvents: "none" }} />
-            )}
-            <div style={{ position: "absolute", top: 20, right: 20, width: 70, height: 70, borderRadius: "50%", border: `1px solid ${p.tagColor}25`, boxShadow: `0 0 20px ${p.tagColor}18`, background: `radial-gradient(circle, ${p.tagColor}06 0%, transparent 70%)` }} />
-            <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, letterSpacing: 2, color: p.tagColor, background: p.tagBg, border: `1px solid ${p.tagColor}30`, padding: "4px 12px", borderRadius: 99, marginBottom: 18 }}>{p.tag}</span>
-            <h3 style={{ fontSize: "clamp(22px,3vw,30px)", fontWeight: 900, color: p.headColor, margin: "0 0 12px", lineHeight: 1.2, whiteSpace: "pre-line" }}>{p.headline}</h3>
-            <p style={{ color: p.subColor, fontSize: 15, lineHeight: 1.7, margin: "0 0 24px" }}>{p.sub}</p>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${p.tagColor}15`, border: `1px solid ${p.tagColor}30`, borderRadius: 99, padding: "8px 16px" }}>
-              <span style={{ color: p.tagColor, fontWeight: 800, fontSize: 11, letterSpacing: 1 }}>FIND MY MATCH →</span>
-            </div>
-            <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: p.tagColor, boxShadow: `0 0 4px ${p.tagColor}` }} />
-              <span style={{ color: p.tagColor, fontSize: 9, fontWeight: 700, letterSpacing: 1, opacity: 0.85 }}>ACTIVE · 1,421 PEOPLE IN THE NETWORK</span>
-            </div>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: `${f.color}12`, border: `1px solid ${f.color}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 20 }}>{f.icon}</div>
+            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12, letterSpacing: -0.3 }}>{f.title}</h3>
+            <p style={{ color: "#777", fontSize: 15, lineHeight: 1.75, margin: 0 }}>{f.desc}</p>
           </div>
         ))}
       </div>
@@ -283,51 +242,143 @@ function PersonalityGrid() {
   );
 }
 
-function CTASection() {
-  const router = useRouter();
+// ── For everyone ──────────────────────────────────────────────────────
+function ForEveryone() {
   const mobile = useIsMobile();
-  const [ln, setLn] = useState("");
   return (
-    <section style={{ padding: mobile ? "32px 20px 64px" : "40px 40px 80px", display: "flex", justifyContent: "center" }}>
-      <div style={{ maxWidth: 660, width: "100%", background: "#111110", border: "1px solid #1a1a18", borderRadius: 28, padding: mobile ? "36px 24px" : "60px 48px", position: "relative", overflow: "hidden", textAlign: "center" }}>
-        <div style={{ position: "absolute", top: 1, left: "15%", right: "15%", height: 1, background: "linear-gradient(90deg, transparent, #cafd00, transparent)" }} />
-        <div style={{ position: "absolute", top: -60, left: "50%", transform: "translateX(-50%)", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(202,253,0,0.04) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <h2 style={{ fontSize: mobile ? "clamp(26px,8vw,40px)" : "clamp(28px,5vw,50px)", fontWeight: 900, margin: "0 0 14px", lineHeight: 1.1 }}>
-          Your next great<br />collaboration is waiting.
-        </h2>
-        <p style={{ color: "#bbb", fontSize: 15, margin: "0 0 32px", lineHeight: 1.75 }}>
-          Scan in at your next conference.<br />
-          Get matched, meet intentionally, build something real.
-        </p>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <input value={ln} onChange={e => setLn(e.target.value)} placeholder="your@lightning.address" style={{ background: "#1a1a18", border: "1px solid #2a2a28", borderRadius: 99, color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, padding: "13px 20px", outline: "none", width: mobile ? "100%" : 240, transition: "border-color 0.18s", boxSizing: "border-box" }}
-            onFocus={e => (e.target.style.borderColor = "#cafd0060")}
-            onBlur={e => (e.target.style.borderColor = "#2a2a28")}
-          />
-          <button onClick={() => router.push("/login")} style={{ padding: "13px 26px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 28px rgba(202,253,0,0.25)", width: mobile ? "100%" : "auto" }}>
-            LET'S GO →
-          </button>
-        </div>
-        <p style={{ color: "#555", fontSize: 12, margin: "16px 0 0" }}>No account needed · Scan in with your Lightning wallet · Free to explore</p>
+    <section id="for-you" style={{ padding: mobile ? "0 20px 64px" : "0 40px 80px", maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 52 }}>
+        <p style={{ color: "#9d7bb8", fontSize: 10, fontWeight: 700, letterSpacing: 3, marginBottom: 14 }}>FOR EVERYONE</p>
+        <h2 style={{ fontSize: mobile ? "clamp(28px,8vw,44px)" : "clamp(32px,4vw,52px)", fontWeight: 900, letterSpacing: -1.5, lineHeight: 1.1, margin: 0 }}>Every type of person.<br />One room.</h2>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(3,1fr)", gap: 10 }}>
+        {[
+          { icon: "⚡", role: "Founders", desc: "Find your co-founder, first hire, or next investor", color: "#cafd00" },
+          { icon: "💰", role: "Investors", desc: "Meet the founders worth backing before anyone else", color: "#9d7bb8" },
+          { icon: "🎨", role: "Designers", desc: "Connect with builders who need your craft", color: "#9d7bb8" },
+          { icon: "🔬", role: "Researchers", desc: "Find people turning ideas into something real", color: "#cafd00" },
+          { icon: "🌱", role: "Community", desc: "Build real relationships, not just a follower count", color: "#9d7bb8" },
+          { icon: "🔥", role: "Enthusiasts", desc: "Stop watching from the outside. Get in the room.", color: "#cafd00" },
+        ].map((p, i) => (
+          <div key={i} style={{ padding: mobile ? "18px 14px" : "22px 18px", borderRadius: 16, border: "1px solid #1a1a18", background: "#0e0e0c", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = p.color + "30"; e.currentTarget.style.background = p.color + "06"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a18"; e.currentTarget.style.background = "#0e0e0c"; }}
+          >
+            <span style={{ fontSize: mobile ? 20 : 24, display: "block", marginBottom: 10 }}>{p.icon}</span>
+            <p style={{ fontWeight: 800, fontSize: mobile ? 14 : 15, marginBottom: 6, color: "#fff" }}>{p.role}</p>
+            <p style={{ color: "#555", fontSize: mobile ? 12 : 13, lineHeight: 1.6, margin: 0 }}>{p.desc}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
+// ── Organizer section ─────────────────────────────────────────────────
+function Organizers() {
+  const router = useRouter();
+  const mobile = useIsMobile();
+  return (
+    <section id="organizers" style={{ padding: mobile ? "0 20px 64px" : "0 40px 80px", maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 48, alignItems: "center" }}>
+        <div>
+          <p style={{ color: "#9d7bb8", fontSize: 10, fontWeight: 700, letterSpacing: 3, marginBottom: 16 }}>FOR ORGANIZERS</p>
+          <h2 style={{ fontSize: mobile ? "clamp(26px,7vw,40px)" : "clamp(28px,3.5vw,44px)", fontWeight: 900, letterSpacing: -1, lineHeight: 1.15, marginBottom: 20 }}>
+            Give your attendees a reason to come back.
+          </h2>
+          <p style={{ color: "#666", fontSize: 16, lineHeight: 1.8, marginBottom: 32 }}>
+            Create an event code in 30 seconds. Share it with your attendees. We handle the matching. You get the analytics.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 32 }}>
+            {[
+              { icon: "🎟", text: "Event code ready in under a minute" },
+              { icon: "📊", text: "See who is meeting and how it went" },
+              { icon: "🏷", text: "Set the interest tags for your audience" },
+              { icon: "📱", text: "No app download needed" },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <span style={{ color: "#999", fontSize: 15 }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => router.push("/login")} style={{ padding: "13px 24px", borderRadius: 99, background: "#9d7bb8", border: "none", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "opacity 0.18s" }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >Create your event</button>
+        </div>
+
+        <div style={{ background: "#0e0e0c", border: "1px solid #1e1e1c", borderRadius: 20, padding: 28 }}>
+          <p style={{ color: "#333", fontSize: 9, fontWeight: 700, letterSpacing: 2, marginBottom: 18 }}>EVENT OVERVIEW</p>
+          {[
+            { label: "Event", value: "Nairobi Bitcoin Conference 2025", color: "#fff" },
+            { label: "People joined", value: "248", color: "#cafd00" },
+            { label: "Matches made", value: "744", color: "#9d7bb8" },
+            { label: "Meetings confirmed", value: "186", color: "#9d7bb8" },
+            { label: "No shows", value: "Zero", color: "#cafd00" },
+          ].map((row, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 0", borderBottom: i < 4 ? "1px solid #141412" : "none" }}>
+              <span style={{ color: "#555", fontSize: 14 }}>{row.label}</span>
+              <span style={{ color: row.color, fontWeight: 700, fontSize: 15 }}>{row.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── CTA ───────────────────────────────────────────────────────────────
+function CTA() {
+  const router = useRouter();
+  const mobile = useIsMobile();
+  return (
+    <section style={{ padding: mobile ? "0 20px 80px" : "0 40px 100px", textAlign: "center" }}>
+      <div style={{ maxWidth: 560, margin: "0 auto" }}>
+        <p style={{ fontSize: mobile ? "80px" : "120px", fontWeight: 900, lineHeight: 0.85, letterSpacing: -6, marginBottom: 28, userSelect: "none" as const }}>
+          <span style={{ color: "#cafd00" }}>1</span><span style={{ color: "#9d7bb8" }}>%</span>
+        </p>
+        <h2 style={{ fontSize: mobile ? "clamp(24px,7vw,38px)" : "clamp(26px,3.5vw,42px)", fontWeight: 900, letterSpacing: -1, lineHeight: 1.15, marginBottom: 18 }}>
+          Your people are already in the room.
+        </h2>
+        <p style={{ color: "#666", fontSize: 16, lineHeight: 1.75, marginBottom: 36 }}>
+          Stop collecting business cards. Start making the connections that actually matter.
+        </p>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <button onClick={() => router.push("/login")} style={{ padding: "15px 30px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 0 32px rgba(202,253,0,0.25)", transition: "all 0.18s" }}
+            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+          >Join an Event ⚡</button>
+          <button onClick={() => router.push("/login")} style={{ padding: "15px 30px", borderRadius: 99, background: "transparent", border: "1px solid #2a2a28", color: "#aaa", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", transition: "all 0.18s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#aaa"; }}
+          >Create an Event</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const mobile = useIsMobile();
   return (
-    <div style={{ background: "#0e0e0e", minHeight: "100vh", color: "#fff", fontFamily: "'Space Grotesk', sans-serif" }}>
-      <Header />
+    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#fff", fontFamily: "'Space Grotesk', sans-serif" }}>
+      <Nav />
       <Hero />
       <Marquee />
-      <BentoGrid />
-      <PersonalityGrid />
-      <CTASection />
-      <footer style={{ borderTop: "1px solid #1a1a18", padding: mobile ? "24px 20px" : "28px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 14, letterSpacing: 2 }}>MATCHSATS</span>
-        <span style={{ color: "#aaa", fontSize: 12 }}>built in africa, for africa · powered by lightning ⚡</span>
-        <span style={{ color: "#666", fontSize: 11, fontFamily: "monospace" }}>v0.1.0-alpha</span>
+      <HowItWorks />
+      <ForEveryone />
+      <Organizers />
+      <CTA />
+      <footer style={{ borderTop: "1px solid #1a1a18", padding: mobile ? "24px 20px" : "28px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: -1 }}><span style={{ color: "#cafd00" }}>1</span><span style={{ color: "#9d7bb8" }}>%</span></span>
+        <p style={{ color: "#333", fontSize: 13, margin: 0 }}>Built in Nairobi, for the world.</p>
+        <div style={{ display: "flex", gap: 20 }}>
+          {["Privacy", "Terms", "GitHub"].map(l => (
+            <span key={l} style={{ color: "#444", fontSize: 13, cursor: "pointer", transition: "color 0.18s" }} onMouseEnter={e => e.currentTarget.style.color="#888"} onMouseLeave={e => e.currentTarget.style.color="#444"}>{l}</span>
+          ))}
+        </div>
       </footer>
     </div>
   );

@@ -365,10 +365,10 @@ export default function MatchesPage() {
 
   const handleDisconnect = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    router.push("/");
   };
-  
-  const activeMeetings = matches.filter(m => m.status !== "new"); 
+
+  const activeMeetings = matches.filter(m => m.status !== "new");
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -396,19 +396,31 @@ export default function MatchesPage() {
 
       {/* Hotkey modal */}
       {showHotkeys && (
-        <div onClick={() => setShowHotkeys(false)} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#111110", border: "1px solid #222", borderRadius: 20, padding: "28px 32px", minWidth: 300, fontFamily: "monospace" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#9d7bb8" }} />
-              <p style={{ color: "#9d7bb8", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: 0 }}>KEYBOARD SHORTCUTS</p>
+        <div onClick={() => setShowHotkeys(false)} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#111110", border: "1px solid #1e1e1c", borderRadius: 24, padding: "32px 28px", maxWidth: 480, width: "100%", maxHeight: "80vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#9d7bb8" }} />
+                <p style={{ color: "#9d7bb8", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: 0 }}>FAQ</p>
+              </div>
+              <button onClick={() => setShowHotkeys(false)} style={{ background: "none", border: "none", color: "#555", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>✕</button>
             </div>
-            {[["j / ↓","next match"],["k / ↑","previous match"],["enter","open profile"],["c","confirm meeting"],["?","toggle shortcuts"],["esc","close"]].map(([key, desc]) => (
-              <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <kbd style={{ background: "#1a1a18", border: "1px solid #2a2a28", borderRadius: 6, padding: "3px 10px", color: "#cafd00", fontSize: 12 }}>{key}</kbd>
-                <span style={{ color: "#aaa", fontSize: 13 }}>{desc}</span>
+            {[
+              { q: "How does matching work?", a: "We read your profile — what you're building, what you need, your interests — and compare it against everyone else at your event. You get your top 3 matches with a score and a real reason why you should meet." },
+              { q: "Who can see my profile?", a: "Only people at the same event with the same event code. Your profile is not public. Names on match cards stay visible once you're matched." },
+              { q: "What is the event code?", a: "A short code your organizer shares before the event. It scopes your matches to people at the same conference. Ask your organizer if you don't have one." },
+              { q: "How do I message a match?", a: "Tap View on any match card, then tap Message. You can chat directly in the app — no phone numbers, no LinkedIn." },
+              { q: "What is the soulmate tab?", a: "A second matching mode for the human side of you. Select personal interests like music, travel, or food and get matched with people you'd actually enjoy spending time with." },
+              { q: "Can I change my profile?", a: "Yes. Tap the avatar in the top right corner, then Edit Profile. Your matches will update next time you run Find My Matches." },
+              { q: "Is there an app to download?", a: "No. Open 1percent.one in your phone browser and tap Add to Home Screen. It installs like a real app without going through any app store." },
+              { q: "How do I log out?", a: "Tap the avatar in the top right, then Log out. You'll be taken back to the home page." },
+            ].map((item, i) => (
+              <div key={i} style={{ marginBottom: 20, paddingBottom: 20, borderBottom: i < 7 ? "1px solid #1a1a18" : "none" }}>
+                <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, margin: "0 0 8px" }}>{item.q}</p>
+                <p style={{ color: "#777", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{item.a}</p>
               </div>
             ))}
-            <p style={{ color: "#777", fontSize: 11, margin: "16px 0 0", textAlign: "center" }}>click anywhere to close</p>
+            <p style={{ color: "#333", fontSize: 12, textAlign: "center", margin: "8px 0 0" }}>tap anywhere outside to close</p>
           </div>
         </div>
       )}
@@ -416,7 +428,7 @@ export default function MatchesPage() {
       {/* Header */}
       <div style={{ borderBottom: "1px solid #111110", padding: "0.9rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "rgba(10,10,10,0.92)", backdropFilter: "blur(14px)", zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 13, letterSpacing: 2 }}>MATCHSATS</span>
+          <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: -0.5 }}><span style={{ color: "#cafd00" }}>1</span><span style={{ color: "#9d7bb8" }}>%</span></span>
           <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#cafd0010", border: "1px solid #cafd0018", borderRadius: 99, padding: "2px 8px" }}>
             <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#cafd00", opacity: livePulse ? 1 : 0.2, transition: "opacity 0.4s", boxShadow: livePulse ? "0 0 5px #cafd00" : "none" }} />
             <span style={{ color: "#cafd00", fontSize: 8, fontWeight: 700, letterSpacing: 1.5 }}>LIVE</span>
@@ -427,10 +439,10 @@ export default function MatchesPage() {
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#cafd0040"; e.currentTarget.style.color = "#cafd00"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a18"; e.currentTarget.style.color = "#555"; }}
           >MAP</button>
-          <button onClick={() => setShowHotkeys(true)} style={{ background: "none", border: "1px solid #1a1a18", borderRadius: 7, color: "#666", fontFamily: "monospace", fontSize: 12, padding: "3px 9px", cursor: "pointer", transition: "all 0.18s" }}
+          <button onClick={() => setShowHotkeys(true)} style={{ background: "none", border: "1px solid #1a1a18", borderRadius: 7, color: "#666", fontFamily: "'Space Grotesk', sans-serif", fontSize: 11, padding: "3px 10px", cursor: "pointer", transition: "all 0.18s", fontWeight: 700 }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#9d7bb860"; e.currentTarget.style.color = "#9d7bb8"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a1a18"; e.currentTarget.style.color = "#666"; }}
-          >?</button>
+          >FAQ</button>
           <div style={{ position: "relative" }}>
             <div onClick={() => setShowMenu(m => !m)} style={{ width: 30, height: 30, borderRadius: "50%", background: "#9d7bb820", border: "1px solid #9d7bb840", display: "flex", alignItems: "center", justifyContent: "center", color: "#9d7bb8", fontWeight: 800, fontSize: 12, cursor: "pointer", transition: "all 0.18s" }}
               onMouseEnter={e => { e.currentTarget.style.background = "#9d7bb830"; e.currentTarget.style.boxShadow = "0 0 10px rgba(157,123,184,0.3)"; }}
@@ -446,7 +458,7 @@ export default function MatchesPage() {
                 <button onClick={handleDisconnect} style={{ width: "100%", padding: "9px 14px", borderRadius: 8, background: "transparent", border: "none", color: "#ff6666", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 13, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.background = "#ff444415"}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                >⚡ Disconnect Wallet</button>
+                >← Log out</button>
               </div>
             )}
           </div>
@@ -570,10 +582,6 @@ export default function MatchesPage() {
           )}
         </div>
 
-        {/* Keyboard hint */}
-        <p style={{ color: "#777", fontSize: 11, textAlign: "center", marginTop: 24, fontFamily: "monospace" }}>
-          press <span style={{ color: "#666" }}>?</span> for keyboard shortcuts
-        </p>
       </div>
     </main>
   );

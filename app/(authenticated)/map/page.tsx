@@ -82,11 +82,6 @@ function useMapbox(containerRef: React.MutableRefObject<HTMLDivElement>, onLoad:
         antialias: true,
       });
 
-      // Custom dark overlay
-      map.on("style.load", () => {
-        map.setPaintProperty("background", "background-color", "#0a0a0a");
-      });
-
       map.on("load", () => onLoad(map, mbgl));
     };
     document.head.appendChild(script);

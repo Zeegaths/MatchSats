@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 type Step = "boot" | "username" | "done";
 
 const BOOT_LINES = [
-  { text: "detected 3 VCs nearby. deploying politeness shield 🛡️", delay: 0,    color: "#ff8c42" },
-  { text: "scanning for people who actually ship things...",         delay: 600               },
-  { text: "ghost probability: LOW ✓  vibe check: PASSED ✓",        delay: 1100, color: "#cafd00" },
-  { text: "you're one of the good ones. pick a username.",          delay: 1700, color: "#cafd00" },
+  { text: "well hello 👀",                                              delay: 0              },
+  { text: "you actually showed up. we respect that.",                   delay: 1000           },
+  { text: "there are people here you genuinely need to meet.",          delay: 2100, color: "#cafd00" },
+  { text: "let's find them.",                                           delay: 3100, color: "#cafd00" },
 ];
+
+const BOOT_DURATION = 4200;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +24,13 @@ export default function LoginPage() {
   const bootedRef = useRef(false);
   const usernameRef = useRef<HTMLInputElement>(null);
 
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    fetch("/api/auth/me").then(r => r.json()).then(d => {
+      if (d.loggedIn) router.replace("/matches");
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (bootedRef.current) return;
     bootedRef.current = true;
@@ -31,13 +40,13 @@ export default function LoginPage() {
     setTimeout(() => {
       setStep("username");
       setTimeout(() => usernameRef.current?.focus(), 100);
-    }, 2400);
+    }, BOOT_DURATION);
   }, []);
 
   const handleUsernameSubmit = async () => {
     const clean = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (clean.length < 2) { setUsernameError("At least 2 characters"); return; }
-    if (clean.length > 20) { setUsernameError("Max 20 characters"); return; }
+    if (clean.length < 2) { setUsernameError("needs to be at least 2 characters"); return; }
+    if (clean.length > 20) { setUsernameError("max 20 characters"); return; }
     setLoading(true);
     setUsernameError("");
     const res = await fetch("/api/auth/username", {
@@ -48,50 +57,54 @@ export default function LoginPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      setUsernameError(data.error ?? "Something went wrong");
+      setUsernameError(data.error ?? "something went wrong, try again");
       return;
     }
     setStep("done");
-    setTimeout(() => router.push("/profile"), 1200);
+    setTimeout(() => router.push("/profile"), 1400);
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0e0e0e", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", display: "flex", flexDirection: "column" }}>
+    <main style={{ minHeight: "100vh", background: "#111110", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", display: "flex", flexDirection: "column" }}>
       <style>{`
-        @keyframes fadeUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
         @keyframes dot    { 0%,80%,100%{opacity:0.2}40%{opacity:1} }
         @keyframes lp     { 0%,100%{transform:scale(1);opacity:0.06}50%{transform:scale(1.1);opacity:0.15} }
-        input::placeholder { color: #444; }
+        input::placeholder { color: #888; }
         input:focus { outline: none; }
       `}</style>
 
+      {/* Header */}
       <div style={{ padding: "1.25rem 1.5rem" }}>
-        <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 15, letterSpacing: 2 }}>MATCHSATS</span>
+        <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: -1 }}>
+          <span style={{ color: "#cafd00" }}>1</span><span style={{ color: "#9d7bb8" }}>%</span>
+        </span>
       </div>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
 
         {/* BOOT */}
         {step === "boot" && (
-          <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 48 }}>
+          <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 52 }}>
             <div style={{ position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {[1,2,3].map(i => (
                 <div key={i} style={{ position: "absolute", width: 28+i*16, height: 28+i*16, borderRadius: "50%", border: "1px solid #cafd00", opacity: 0.08/i, animation: `lp ${1+i*0.5}s ease-in-out infinite` }} />
               ))}
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#cafd0018", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: "0 0 24px rgba(202,253,0,0.35)" }}>⚡</div>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#cafd0018", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: "0 0 24px rgba(202,253,0,0.3)" }}>⚡</div>
             </div>
-            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16, minHeight: 140 }}>
+
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 20, minHeight: 160 }}>
               {bootLines.map((line, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, animation: "fadeUp 0.4s ease both" }}>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: line.color ?? "#cafd00", flexShrink: 0, marginTop: 6, boxShadow: `0 0 6px ${line.color ?? "#cafd00"}` }} />
-                  <p style={{ color: line.color ?? "#aaa", fontSize: 15, fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{line.text}</p>
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, animation: "fadeUp 0.5s ease both" }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: line.color ?? "#555", flexShrink: 0, marginTop: 8, boxShadow: line.color ? `0 0 6px ${line.color}` : "none" }} />
+                  <p style={{ color: line.color ?? "#fff", fontSize: 17, fontWeight: 500, margin: 0, lineHeight: 1.55 }}>{line.text}</p>
                 </div>
               ))}
               {bootLines.length < BOOT_LINES.length && (
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#333", flexShrink: 0 }} />
-                  <div style={{ display: "flex", gap: 5 }}>
-                    {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#333", animation: `dot 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#222", flexShrink: 0 }} />
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#333", animation: `dot 1.4s ease-in-out ${i*0.25}s infinite` }} />)}
                   </div>
                 </div>
               )}
@@ -101,16 +114,16 @@ export default function LoginPage() {
 
         {/* USERNAME */}
         {step === "username" && (
-          <div style={{ width: "100%", maxWidth: 420, animation: "fadeUp 0.4s ease" }}>
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#cafd0015", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 16px", boxShadow: "0 0 20px rgba(202,253,0,0.2)" }}>⚡</div>
-              <h1 style={{ fontSize: "clamp(26px, 7vw, 38px)", fontWeight: 900, margin: "0 0 8px" }}>Pick a username</h1>
-              <p style={{ color: "#666", fontSize: 14, margin: 0 }}>This is how people will find you at the event.</p>
+          <div style={{ width: "100%", maxWidth: 420, animation: "fadeUp 0.5s ease" }}>
+            <div style={{ textAlign: "center", marginBottom: 36 }}>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#cafd0015", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 20px", boxShadow: "0 0 20px rgba(202,253,0,0.15)" }}>⚡</div>
+              <h1 style={{ fontSize: 28, fontWeight: 900, margin: "0 0 10px", letterSpacing: -0.5 }}>what should we call you?</h1>
+              <p style={{ color: "#bbb", fontSize: 15, margin: 0, lineHeight: 1.6 }}>this is how people at the event will find you.</p>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ background: "#111110", border: `1px solid ${usernameError ? "#ff6666" : username ? "#cafd0050" : "#1e1e1c"}`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, transition: "border-color 0.18s" }}>
-                <span style={{ color: "#666", fontSize: 18, fontWeight: 700 }}>@</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ background: "#1a1a18", border: `1px solid ${usernameError ? "#ff6666" : username ? "#cafd0050" : "#1e1e1c"}`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, transition: "border-color 0.18s" }}>
+                <span style={{ color: "#aaa", fontSize: 18, fontWeight: 700 }}>@</span>
                 <input
                   ref={usernameRef}
                   value={username}
@@ -124,17 +137,17 @@ export default function LoginPage() {
               </div>
 
               {usernameError && (
-                <p style={{ color: "#ff6666", fontSize: 12, margin: "0 4px", animation: "fadeUp 0.2s ease" }}>{usernameError}</p>
+                <p style={{ color: "#ff6666", fontSize: 13, margin: "0 4px", animation: "fadeUp 0.2s ease" }}>{usernameError}</p>
               )}
 
-              <p style={{ color: "#444", fontSize: 12, margin: "0 4px" }}>Letters, numbers, underscores only.</p>
+              <p style={{ color: "#999", fontSize: 13, margin: "0 4px" }}>letters, numbers, underscores. keep it simple.</p>
 
               <button
                 onClick={handleUsernameSubmit}
                 disabled={loading || username.length < 2}
-                style={{ width: "100%", padding: "16px", borderRadius: 99, background: username.length >= 2 ? "#cafd00" : "#1a1a18", border: "none", color: username.length >= 2 ? "#1a2200" : "#444", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: username.length >= 2 ? "pointer" : "not-allowed", letterSpacing: 1.5, transition: "all 0.18s", boxShadow: username.length >= 2 ? "0 0 24px rgba(202,253,0,0.2)" : "none" }}
+                style={{ width: "100%", padding: "16px", borderRadius: 99, background: username.length >= 2 ? "#cafd00" : "#141412", border: "none", color: username.length >= 2 ? "#1a2200" : "#333", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: username.length >= 2 ? "pointer" : "not-allowed", transition: "all 0.2s", boxShadow: username.length >= 2 ? "0 0 24px rgba(202,253,0,0.18)" : "none" }}
               >
-                {loading ? "JOINING..." : "LET'S GO ⚡"}
+                {loading ? "one sec..." : "let's go ⚡"}
               </button>
             </div>
           </div>
@@ -142,12 +155,12 @@ export default function LoginPage() {
 
         {/* DONE */}
         {step === "done" && (
-          <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, animation: "fadeUp 0.4s ease" }}>
-            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#cafd0015", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, boxShadow: "0 0 40px rgba(202,253,0,0.25)" }}>⚡</div>
+          <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, animation: "fadeUp 0.5s ease" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#cafd0015", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, boxShadow: "0 0 40px rgba(202,253,0,0.2)" }}>⚡</div>
             <div style={{ textAlign: "center" }}>
-              <h2 style={{ fontSize: 32, fontWeight: 900, margin: "0 0 8px" }}>you're in.</h2>
-              <p style={{ color: "#cafd00", fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>@{username}</p>
-              <p style={{ color: "#666", fontSize: 13, margin: 0 }}>setting up your profile...</p>
+              <h2 style={{ fontSize: 30, fontWeight: 900, margin: "0 0 10px", letterSpacing: -0.5 }}>you're in 🎉</h2>
+              <p style={{ color: "#cafd00", fontSize: 15, fontWeight: 700, margin: "0 0 6px" }}>@{username}</p>
+              <p style={{ color: "#bbb", fontSize: 14, margin: 0 }}>setting up your space...</p>
             </div>
           </div>
         )}
@@ -156,3 +169,4 @@ export default function LoginPage() {
     </main>
   );
 }
+
