@@ -23,25 +23,25 @@ interface MapPin {
   color: string;
 }
 
-// ── Data — replace lat/lng with real Nostr profile locations ──────────
-const CONFERENCE_CENTER = { lat: -1.2850, lng: 36.8155 };
+// ── Data — ASK Dome, Jamhuri Park Showground, Ngong Road, Nairobi ───────
+const CONFERENCE_CENTER = { lat: -1.30839, lng: 36.76589 };
 
 const MAP_PINS: MapPin[] = [
-  // Matches
-  { id: "1",  type: "match", name: "Amara O.",  role: "Fintech Founder",     initials: "A", lat: -1.2838, lng: 36.8148, status: "meet-now",    matchScore: 94, color: "#cafd00" },
-  { id: "2",  type: "match", name: "Dev X",     role: "Rust Developer",      initials: "D", lat: -1.2872, lng: 36.8221, status: "both-locked",  matchScore: 88, color: "#9d7bb8" },
-  { id: "3",  type: "match", name: "Priya K.",  role: "VC Associate",        initials: "P", lat: -1.2815, lng: 36.8188, status: "new",          matchScore: 81, color: "#666" },
-  { id: "4",  type: "match", name: "Kwame A.", role: "Protocol Engineer",    initials: "K", lat: -1.2863, lng: 36.8108, status: "new",          matchScore: 76, color: "#666" },
-  // Venues
-  { id: "v1", type: "venue", name: "Main Stage",       description: "Keynotes · Opening · Closing",          lat: -1.2850, lng: 36.8155, color: "#cafd00" },
-  { id: "v2", type: "venue", name: "Builder's Den",    description: "Workshops · Hackathon space",           lat: -1.2832, lng: 36.8172, color: "#cafd00" },
-  { id: "v3", type: "venue", name: "Lightning Lounge", description: "Lightning talks · Demo station",        lat: -1.2861, lng: 36.8140, color: "#cafd00" },
-  { id: "v4", type: "venue", name: "Investor Corner",  description: "Closed sessions · Invite only",        lat: -1.2842, lng: 36.8200, color: "#cafd00" },
+  // Matches (positions relative to venue)
+  { id: "1",  type: "match", name: "Amara O.",  role: "Fintech Founder",     initials: "A", lat: -1.30780, lng: 36.76540, status: "meet-now",    matchScore: 94, color: "#cafd00" },
+  { id: "2",  type: "match", name: "Dev X",     role: "Rust Developer",      initials: "D", lat: -1.30900, lng: 36.76650, status: "both-locked",  matchScore: 88, color: "#9d7bb8" },
+  { id: "3",  type: "match", name: "Priya K.",  role: "VC Associate",        initials: "P", lat: -1.30750, lng: 36.76620, status: "new",          matchScore: 81, color: "#666" },
+  { id: "4",  type: "match", name: "Kwame A.",  role: "Protocol Engineer",   initials: "K", lat: -1.30870, lng: 36.76510, status: "new",          matchScore: 76, color: "#666" },
+  // Venues inside ASK Dome
+  { id: "v1", type: "venue", name: "Main Stage",       description: "Keynotes · Opening · Closing",         lat: -1.30839, lng: 36.76589, color: "#cafd00" },
+  { id: "v2", type: "venue", name: "Exhibition Hall",  description: "Demos · Booths · Project showcases",   lat: -1.30810, lng: 36.76560, color: "#cafd00" },
+  { id: "v3", type: "venue", name: "Rooftop Bar",      description: "Drinks · Casual chats · Views",        lat: -1.30820, lng: 36.76610, color: "#cafd00" },
+  { id: "v4", type: "venue", name: "Business Lounge",  description: "Quiet · Private sessions · Charging",  lat: -1.30860, lng: 36.76570, color: "#cafd00" },
   // Meet spots
-  { id: "s1", type: "meetspot", name: "Coffee Corner",      description: "Quiet · 4 seats · Great acoustics", lat: -1.2845, lng: 36.8138, color: "#9d7bb8", capacity: 4,  available: true },
-  { id: "s2", type: "meetspot", name: "Outdoor Terrace",    description: "Open air · 8 seats · Shaded",       lat: -1.2870, lng: 36.8162, color: "#9d7bb8", capacity: 8,  available: true },
-  { id: "s3", type: "meetspot", name: "Networking Hub",     description: "High-tops · Standing · Busy",       lat: -1.2825, lng: 36.8195, color: "#9d7bb8", capacity: 12, available: false },
-  { id: "s4", type: "meetspot", name: "Quiet Room B",       description: "Private · Bookable · Soundproof",   lat: -1.2855, lng: 36.8178, color: "#9d7bb8", capacity: 2,  available: true },
+  { id: "s1", type: "meetspot", name: "Main Entrance",   description: "Everyone passes here · Easy to find",  lat: -1.30900, lng: 36.76580, color: "#9d7bb8", capacity: 4,  available: true },
+  { id: "s2", type: "meetspot", name: "Outdoor Terrace", description: "Open air · Shaded · 8 seats",          lat: -1.30800, lng: 36.76640, color: "#9d7bb8", capacity: 8,  available: true },
+  { id: "s3", type: "meetspot", name: "Gourmet Kitchen", description: "Grab food · Relaxed · Busy at lunch",  lat: -1.30830, lng: 36.76550, color: "#9d7bb8", capacity: 6,  available: true },
+  { id: "s4", type: "meetspot", name: "Quiet Corner",    description: "Away from the crowd · Best for focus", lat: -1.30780, lng: 36.76600, color: "#9d7bb8", capacity: 2,  available: true },
 ];
 
 const STATUS_CONFIG: Record<MatchStatus, { label: string; color: string; glow: boolean }> = {
@@ -80,6 +80,11 @@ function useMapbox(containerRef: React.MutableRefObject<HTMLDivElement>, onLoad:
         center: [CONFERENCE_CENTER.lng, CONFERENCE_CENTER.lat],
         zoom: 16, pitch: 45, bearing: -10,
         antialias: true,
+      });
+
+      // Custom dark overlay
+      map.on("style.load", () => {
+        map.setPaintProperty("background", "background-color", "#0a0a0a");
       });
 
       map.on("load", () => onLoad(map, mbgl));
@@ -228,7 +233,7 @@ export default function MapPage() {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <span style={{ color: "#cafd00", fontWeight: 700, fontSize: 13, letterSpacing: 2 }}>MATCHSATS</span>
+            <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: -0.5 }}><span style={{ color: "#cafd00" }}>1</span><span style={{ color: "#9d7bb8" }}>%</span></span>
             <span style={{ color: "#222", fontSize: 12 }}>·</span>
             <span style={{ color: "#888", fontSize: 12 }}>Bitcoin Unconference · Nairobi</span>
           </div>

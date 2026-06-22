@@ -269,6 +269,7 @@ export default function MatchesPage() {
   const [stats, setStats] = useState({ meetings: 0, zaps: 0, reputation: 100, satsSaved: 0 });
   const [loading, setLoading] = useState(true);
   const [matching, setMatching] = useState(false);
+  const [hasEventCode, setHasEventCode] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
@@ -293,9 +294,18 @@ export default function MatchesPage() {
   useEffect(() => {
     async function loadMatches() {
       try {
+        // Check session for event code
+        const meRes = await fetch("/api/auth/me");
+        const me = await meRes.json();
+        if (!me.loggedIn) { router.push("/"); return; }
+        if (!me.eventCode && !me.hasEventCode) {
+          setHasEventCode(false);
+          setLoading(false);
+          return;
+        }
         const res = await fetch("/api/match");
         if (!res.ok) {
-          setMatches(MATCHES); // not logged in — show mock
+          setLoading(false);
           return;
         }
         const data = await res.json();
@@ -308,19 +318,18 @@ export default function MatchesPage() {
             location: m.location ?? "Here",
             sats: null,
             status: m.status === "both_locked" ? "both-locked" : m.status === "confirmed" ? "meet-now" : "new",
-            tags: (typeof m.interests === "string" 
-              ? JSON.parse(m.interests) 
+            tags: (typeof m.interests === "string"
+              ? JSON.parse(m.interests)
               : (m.interests ?? [])).slice(0, 3).map((t: string) => t.replace("#", "")),
             rationale: m.rationale ?? "",
             matchScore: m.score ?? 0,
             timer: null,
           })));
         } else {
-          // Logged in but no matches yet — show empty state, NOT mock
           setMatches([]);
         }
       } catch {
-        setMatches(MATCHES);
+        setMatches([]);
       } finally {
         setLoading(false);
       }
@@ -551,7 +560,18 @@ export default function MatchesPage() {
 
         {/* Match cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {loading ? (
+          {!hasEventCode ? (
+            <div style={{ textAlign: "center", padding: "48px 24px", borderRadius: 20, border: "1px solid #cafd0030", background: "#cafd0008" }}>
+              <p style={{ fontSize: 32, margin: "0 0 12px" }}>🎟</p>
+              <p style={{ color: "#fff", fontWeight: 700, fontSize: 18, margin: "0 0 8px" }}>You need an event code</p>
+              <p style={{ color: "#888", fontSize: 14, margin: "0 0 20px", lineHeight: 1.6 }}>
+                Ask your organizer for the event code and add it to your profile. It's what connects you to everyone at the conference.
+              </p>
+              <button onClick={() => router.push("/profile")} style={{ padding: "12px 24px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
+                Add Event Code
+              </button>
+            </div>
+          ) : loading ? (
             <div style={{ textAlign: "center", padding: "40px 0" }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#cafd00", boxShadow: "0 0 12px #cafd00", animation: "pulse 1s ease-in-out infinite", margin: "0 auto" }} />
               <style>{`@keyframes pulse{0%,100%{opacity:0.4}50%{opacity:1}}`}</style>

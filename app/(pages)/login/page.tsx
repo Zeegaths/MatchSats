@@ -24,6 +24,7 @@ export default function LoginPage() {
   const bootedRef = useRef(false);
   const usernameRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => { fetch("/api/auth/me").then(r=>r.json()).then(d=>{ if(d.loggedIn) router.replace("/matches"); }).catch(()=>{}); }, []);
   // Auto-redirect if already logged in
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(d => {

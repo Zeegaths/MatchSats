@@ -1,26 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const BITCOIN_INTERESTS = [
   { label: "#bitcoin", active: true },
-  { label: "#lightning", active: true },
-  { label: "#nostr", active: false },
+  { label: "#lightning", active: false },
+  { label: "#startups", active: false },
+  { label: "#investing", active: false },
+  { label: "#fintech", active: false },
+  { label: "#payments", active: false },
   { label: "#open-source", active: false },
-  { label: "#rust", active: false },
-  { label: "#zero-knowledge", active: false },
+  { label: "#design", active: false },
+  { label: "#web3", active: false },
+  { label: "#ai", active: false },
   { label: "#privacy", active: false },
-  { label: "#devops", active: false },
-  { label: "#web-design", active: false },
-  { label: "#ai-agents", active: false },
-  { label: "#smart-contracts", active: false },
-  { label: "#defi", active: false },
-  { label: "#hardware", active: false },
-  { label: "#macro-economics", active: false },
-  { label: "#cybersecurity", active: false },
-  { label: "#generative-art", active: false },
+  { label: "#africa", active: false },
+  { label: "#impact", active: false },
+  { label: "#community", active: false },
+  { label: "#content", active: false },
   { label: "#gaming", active: false },
+  { label: "#music", active: false },
+  { label: "#art", active: false },
 ];
 
 const SOULMATE_INTERESTS = [
@@ -129,6 +130,27 @@ export default function ProfileSetupPage() {
   const [inviteCode, setInviteCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  // Load existing profile on mount
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then(data => {
+      const p = data.profile;
+      if (!p) return;
+      if (p.name) setName(p.name);
+      if (p.core_vibe) setSelectedVibe(p.core_vibe);
+      if (p.role) setSelectedRole(p.role);
+      if (p.building) setCurrentBuild(p.building);
+      if (p.needs) setNeeds(p.needs);
+      if (p.vibe) setVibeNote(p.vibe);
+      if (p.invite_code) setInviteCode(p.invite_code);
+      if (p.interests?.length) {
+        setInterests(prev => prev.map(t => ({
+          ...t, active: p.interests.includes(t.label)
+        })));
+      }
+      if (p.personality?.role) setSelectedRole(p.personality.role);
+    }).catch(() => {});
+  }, []);
 
   const toggleInterest = (i: number) =>
     setInterests(prev => prev.map((t, idx) => idx === i ? { ...t, active: !t.active } : t));
