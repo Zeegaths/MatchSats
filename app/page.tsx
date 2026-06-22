@@ -10,7 +10,7 @@ function MatrixRain() {
     const ctx = c.getContext("2d"); if (!ctx) return;
     const resize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
     resize(); window.addEventListener("resize", resize);
-    const chars = "01⚡₿10アイウカキ";
+    const chars = "01₿10アイウカキ";
     const cols = Math.floor(c.width / 18);
     const drops = Array(cols).fill(1);
     const draw = () => {
@@ -253,7 +253,7 @@ function ForEveryone() {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(3,1fr)", gap: 10 }}>
         {[
-          { icon: "⚡", role: "Founders", desc: "Find your co-founder, first hire, or next investor", color: "#cafd00" },
+          { icon: "🚀", role: "Founders", desc: "Find your co-founder, first hire, or next investor", color: "#cafd00" },
           { icon: "💰", role: "Investors", desc: "Meet the founders worth backing before anyone else", color: "#9d7bb8" },
           { icon: "🎨", role: "Designers", desc: "Connect with builders who need your craft", color: "#9d7bb8" },
           { icon: "🔬", role: "Researchers", desc: "Find people turning ideas into something real", color: "#cafd00" },
@@ -348,7 +348,7 @@ function CTA() {
           <button onClick={() => router.push("/login")} style={{ padding: "15px 30px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 0 32px rgba(202,253,0,0.25)", transition: "all 0.18s" }}
             onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-          >Join an Event ⚡</button>
+          >Join an Event</button>
           <button onClick={() => router.push("/login")} style={{ padding: "15px 30px", borderRadius: 99, background: "transparent", border: "1px solid #2a2a28", color: "#aaa", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, fontSize: 15, cursor: "pointer", transition: "all 0.18s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#fff"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "#2a2a28"; e.currentTarget.style.color = "#aaa"; }}

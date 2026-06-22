@@ -12,9 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "MatchSats | Powering the Pulse",
-  description: "Match with your people. Commit with Sats. Meet for real.",
+export const metadata = {
+  title: "1%",
+  description: "At every event, 1% of the room will change your life. We find them.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -28,6 +29,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        <meta name="theme-color" content="#cafd00" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="1%" />
       </head>
       <body className="bg-[#0e0e0e] text-white antialiased" suppressHydrationWarning>
         {children}
