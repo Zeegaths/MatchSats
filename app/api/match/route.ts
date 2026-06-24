@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
   const excludeList = [userId, ...alreadyMatched];
   const placeholders = excludeList.map(() => "?").join(",");
   const candidates = eventCode
-    ? db.prepare(`SELECT * FROM profiles WHERE pubkey NOT IN (${placeholders}) AND invite_code = ? LIMIT 20`).all(...excludeList, eventCode) as any[]
+    ? db.prepare(`SELECT * FROM profiles WHERE pubkey NOT IN (${placeholders}) AND (invite_code = ? OR invite_code IS NULL OR invite_code = '') LIMIT 20`).all(...excludeList, eventCode) as any[]
     : db.prepare(`SELECT * FROM profiles WHERE pubkey NOT IN (${placeholders}) LIMIT 20`).all(...excludeList) as any[];
+
   if (candidates.length === 0) {
     return NextResponse.json({ matches: [], message: "No other profiles found yet. Share the event code!" });
   }

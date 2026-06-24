@@ -55,6 +55,52 @@ const KNOWN_EVENTS = [
     date: "24–26 June 2026",
     emoji: "🇰🇪",
     active: true,
+    available: true,
+  },
+  {
+    code: "KAMPALA1",
+    name: "Bitcoin Kampala Summit",
+    location: "Kampala, Uganda",
+    date: "Sept 2026",
+    emoji: "🇺🇬",
+    active: false,
+    available: false,
+  },
+  {
+    code: "LAGOS3",
+    name: "Lagos Bitcoin Festival",
+    location: "Lagos, Nigeria",
+    date: "Oct 2026",
+    emoji: "🇳🇬",
+    active: false,
+    available: false,
+  },
+  {
+    code: "DAKAR1",
+    name: "Dakar Bitcoin Day",
+    location: "Dakar, Senegal",
+    date: "Nov 2026",
+    emoji: "🇸🇳",
+    active: false,
+    available: false,
+  },
+  {
+    code: "KIGALI2",
+    name: "Rwanda Bitcoin Conference",
+    location: "Kigali, Rwanda",
+    date: "Jan 2027",
+    emoji: "🇷🇼",
+    active: false,
+    available: false,
+  },
+  {
+    code: "ACCRA2",
+    name: "Ghana Bitcoin Summit",
+    location: "Accra, Ghana",
+    date: "Feb 2027",
+    emoji: "🇬🇭",
+    active: false,
+    available: false,
   },
 ];
 
@@ -80,59 +126,68 @@ function EventPicker({ value, onChange }: { value: string; onChange: (code: stri
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
         {KNOWN_EVENTS.map(ev => {
           const isSelected = value === ev.code;
+          const unavailable = !ev.available;
           return (
             <button
               key={ev.code}
-              onClick={() => onChange(isSelected ? "" : ev.code)}
+              onClick={() => { if (unavailable) return; onChange(isSelected ? "" : ev.code); }}
+              disabled={unavailable}
               style={{
                 width: "100%",
                 padding: "14px 16px",
                 borderRadius: 14,
-                border: isSelected ? "1px solid #cafd00" : "1px solid #1e1e1c",
-                background: isSelected ? "#cafd0012" : "#111110",
-                cursor: "pointer",
+                border: isSelected ? "1px solid #cafd00" : unavailable ? "1px solid #1a1a18" : "1px solid #1e1e1c",
+                background: isSelected ? "#cafd0012" : unavailable ? "#0a0a0a" : "#111110",
+                cursor: unavailable ? "not-allowed" : "pointer",
                 textAlign: "left",
                 transition: "all 0.18s",
                 display: "flex",
                 alignItems: "center",
                 gap: 14,
                 fontFamily: "'Space Grotesk', sans-serif",
+                opacity: unavailable ? 0.45 : 1,
               }}
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = "#2a2a28"; }}
-              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = "#1e1e1c"; }}
+              onMouseEnter={e => { if (!isSelected && !unavailable) e.currentTarget.style.borderColor = "#2a2a28"; }}
+              onMouseLeave={e => { if (!isSelected && !unavailable) e.currentTarget.style.borderColor = "#1e1e1c"; }}
             >
-              {/* Flag / emoji */}
+              {/* Flag */}
               <span style={{ fontSize: 22, flexShrink: 0 }}>{ev.emoji}</span>
 
               {/* Details */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ color: isSelected ? "#cafd00" : "#fff", fontWeight: 700, fontSize: 14 }}>
+                  <span style={{ color: isSelected ? "#cafd00" : unavailable ? "#444" : "#fff", fontWeight: 700, fontSize: 14 }}>
                     {ev.name}
                   </span>
                   {ev.active && (
-                    <span style={{
-                      background: "#cafd0015", border: "1px solid #cafd0040",
-                      color: "#cafd00", fontSize: 9, fontWeight: 700,
-                      padding: "2px 8px", borderRadius: 99, letterSpacing: 1,
-                    }}>LIVE</span>
+                    <span style={{ background: "#cafd0015", border: "1px solid #cafd0040", color: "#cafd00", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 99, letterSpacing: 1 }}>LIVE</span>
+                  )}
+                  {unavailable && (
+                    <span style={{ background: "#1a1a18", border: "1px solid #222", color: "#444", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 99, letterSpacing: 1 }}>NOT TODAY</span>
                   )}
                 </div>
-                <p style={{ color: "#555", fontSize: 12, margin: "2px 0 0" }}>
+                <p style={{ color: unavailable ? "#333" : "#555", fontSize: 12, margin: "2px 0 0" }}>
                   {ev.location} · {ev.date}
                 </p>
               </div>
 
-              {/* Selected indicator */}
-              <div style={{
-                width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-                border: isSelected ? "none" : "1.5px solid #2a2a28",
-                background: isSelected ? "#cafd00" : "transparent",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.18s",
-              }}>
-                {isSelected && <span style={{ color: "#1a2200", fontSize: 12, fontWeight: 900 }}>✓</span>}
-              </div>
+              {/* Selected indicator — only for available events */}
+              {!unavailable && (
+                <div style={{
+                  width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                  border: isSelected ? "none" : "1.5px solid #2a2a28",
+                  background: isSelected ? "#cafd00" : "transparent",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.18s",
+                }}>
+                  {isSelected && <span style={{ color: "#1a2200", fontSize: 12, fontWeight: 900 }}>✓</span>}
+                </div>
+              )}
+
+              {/* Lock icon for unavailable */}
+              {unavailable && (
+                <span style={{ color: "#2a2a28", fontSize: 14, flexShrink: 0 }}>🔒</span>
+              )}
             </button>
           );
         })}
