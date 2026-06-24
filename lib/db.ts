@@ -32,6 +32,17 @@ function createDb() {
   db.prepare(`DELETE FROM lnurl_challenges WHERE expires_at < ?`).run(Date.now());
   // Migration: add invite_code column if it doesn't exist yet (safe to run repeatedly)
   try { db.exec(`ALTER TABLE profiles ADD COLUMN invite_code TEXT`); } catch {}
+  // Migration: email OTP table
+  try { db.exec(`CREATE TABLE IF NOT EXISTS email_otps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    used INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  )`); } catch {}
+  // Migration: add email column to users
+  try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
   return db;
 }
 

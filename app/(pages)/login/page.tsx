@@ -3,35 +3,40 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-type Step = "boot" | "username" | "done";
+type Step = "boot" | "input" | "otp" | "done";
+type Method = "email" | "username";
 
 const BOOT_LINES = [
-  { text: "well hello 👀",                                              delay: 0              },
-  { text: "you actually showed up. we respect that.",                   delay: 1000           },
-  { text: "there are people here you genuinely need to meet.",          delay: 2100, color: "#cafd00" },
-  { text: "let's find them.",                                           delay: 3100, color: "#cafd00" },
+  { text: "well hello 👀",                                           delay: 0    },
+  { text: "you actually showed up. we respect that.",               delay: 900  },
+  { text: "there are people here you genuinely need to meet.",      delay: 1900, color: "#cafd00" },
+  { text: "let's find them.",                                       delay: 2800, color: "#cafd00" },
 ];
-
-const BOOT_DURATION = 4200;
+const BOOT_DURATION = 3800;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("boot");
+  const [step, setStep]           = useState<Step>("boot");
+  const [method, setMethod]       = useState<Method>("email");
   const [bootLines, setBootLines] = useState<typeof BOOT_LINES>([]);
-  const [username, setUsername] = useState("");
-  const [usernameError, setUsernameError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const bootedRef = useRef(false);
-  const usernameRef = useRef<HTMLInputElement>(null);
+  const [email, setEmail]         = useState("");
+  const [otp, setOtp]             = useState(["", "", "", "", "", ""]);
+  const [username, setUsername]   = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
+  const [sentTo, setSentTo]       = useState("");
+  const bootedRef                 = useRef(false);
+  const inputRef                  = useRef<HTMLInputElement>(null);
+  const otpRefs                   = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => { fetch("/api/auth/me").then(r=>r.json()).then(d=>{ if(d.loggedIn) router.replace("/matches"); }).catch(()=>{}); }, []);
-  // Auto-redirect if already logged in
+  // Redirect if already logged in
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(d => {
       if (d.loggedIn) router.replace("/matches");
     }).catch(() => {});
   }, []);
 
+  // Boot animation
   useEffect(() => {
     if (bootedRef.current) return;
     bootedRef.current = true;
@@ -39,17 +44,89 @@ export default function LoginPage() {
       setTimeout(() => setBootLines(prev => [...prev, line]), line.delay);
     });
     setTimeout(() => {
-      setStep("username");
-      setTimeout(() => usernameRef.current?.focus(), 100);
+      setStep("input");
+      setTimeout(() => inputRef.current?.focus(), 100);
     }, BOOT_DURATION);
   }, []);
 
+  // ── Send OTP ──────────────────────────────────────────────────────
+  const handleSendOTP = async () => {
+    if (!email.includes("@")) { setError("enter a valid email"); return; }
+    setLoading(true);
+    setError("");
+    const res = await fetch("/api/auth/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!res.ok) { setError(data.error ?? "couldn't send email, try again"); return; }
+    setSentTo(email);
+    setStep("otp");
+    setTimeout(() => otpRefs.current[0]?.focus(), 100);
+  };
+
+  // ── Verify OTP ────────────────────────────────────────────────────
+  const handleVerifyOTP = async () => {
+    const code = otp.join("");
+    if (code.length < 6) { setError("enter the full 6-digit code"); return; }
+    setLoading(true);
+    setError("");
+    const res = await fetch("/api/auth/email/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: sentTo, code }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!res.ok) { setError(data.error ?? "invalid code, try again"); return; }
+    setStep("done");
+    setTimeout(() => router.push(data.hasProfile ? "/matches" : "/profile"), 1200);
+  };
+
+  // ── OTP input handling ────────────────────────────────────────────
+  const handleOtpChange = (i: number, val: string) => {
+    const digit = val.replace(/\D/g, "").slice(-1);
+    const next = [...otp];
+    next[i] = digit;
+    setOtp(next);
+    if (digit && i < 5) otpRefs.current[i + 1]?.focus();
+    if (next.every(d => d !== "")) {
+      // auto-submit when all filled
+      setTimeout(() => {
+        const code = next.join("");
+        if (code.length === 6) handleVerifyOTPDirect(code);
+      }, 80);
+    }
+  };
+
+  const handleVerifyOTPDirect = async (code: string) => {
+    setLoading(true);
+    setError("");
+    const res = await fetch("/api/auth/email/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: sentTo, code }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!res.ok) { setError(data.error ?? "invalid code"); return; }
+    setStep("done");
+    setTimeout(() => router.push(data.hasProfile ? "/matches" : "/profile"), 1200);
+  };
+
+  const handleOtpKeyDown = (i: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otp[i] && i > 0) otpRefs.current[i - 1]?.focus();
+    if (e.key === "Enter") handleVerifyOTP();
+  };
+
+  // ── Username fallback ─────────────────────────────────────────────
   const handleUsernameSubmit = async () => {
     const clean = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (clean.length < 2) { setUsernameError("needs to be at least 2 characters"); return; }
-    if (clean.length > 20) { setUsernameError("max 20 characters"); return; }
+    if (clean.length < 2) { setError("needs to be at least 2 characters"); return; }
     setLoading(true);
-    setUsernameError("");
+    setError("");
     const res = await fetch("/api/auth/username", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -57,12 +134,9 @@ export default function LoginPage() {
     });
     const data = await res.json();
     setLoading(false);
-    if (!res.ok) {
-      setUsernameError(data.error ?? "something went wrong, try again");
-      return;
-    }
+    if (!res.ok) { setError(data.error ?? "something went wrong"); return; }
     setStep("done");
-    setTimeout(() => router.push("/profile"), 1400);
+    setTimeout(() => router.push("/profile"), 1200);
   };
 
   return (
@@ -71,7 +145,8 @@ export default function LoginPage() {
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
         @keyframes dot    { 0%,80%,100%{opacity:0.2}40%{opacity:1} }
         @keyframes lp     { 0%,100%{transform:scale(1);opacity:0.06}50%{transform:scale(1.1);opacity:0.15} }
-        input::placeholder { color: #888; }
+        @keyframes pulse  { 0%,100%{opacity:0.4}50%{opacity:1} }
+        input::placeholder { color: #555; }
         input:focus { outline: none; }
       `}</style>
 
@@ -84,7 +159,7 @@ export default function LoginPage() {
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
 
-        {/* BOOT */}
+        {/* ── BOOT ── */}
         {step === "boot" && (
           <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 52 }}>
             <div style={{ position: "relative", width: 80, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -93,7 +168,6 @@ export default function LoginPage() {
               ))}
               <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#cafd0018", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: "0 0 24px rgba(202,253,0,0.3)" }}>⚡</div>
             </div>
-
             <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 20, minHeight: 160 }}>
               {bootLines.map((line, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, animation: "fadeUp 0.5s ease both" }}>
@@ -113,55 +187,161 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* USERNAME */}
-        {step === "username" && (
+        {/* ── INPUT (email or username) ── */}
+        {step === "input" && (
           <div style={{ width: "100%", maxWidth: 420, animation: "fadeUp 0.5s ease" }}>
-            <div style={{ textAlign: "center", marginBottom: 36 }}>
-              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#cafd0015", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 20px", boxShadow: "0 0 20px rgba(202,253,0,0.15)" }}>⚡</div>
-              <h1 style={{ fontSize: 28, fontWeight: 900, margin: "0 0 10px", letterSpacing: -0.5 }}>what should we call you?</h1>
-              <p style={{ color: "#bbb", fontSize: 15, margin: 0, lineHeight: 1.6 }}>this is how people at the event will find you.</p>
+
+            {/* Icon */}
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#cafd0015", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 18px", boxShadow: "0 0 24px rgba(202,253,0,0.15)" }}>⚡</div>
+              <h1 style={{ fontSize: 26, fontWeight: 900, margin: "0 0 8px", letterSpacing: -0.5 }}>
+                {method === "email" ? "what's your email?" : "what should we call you?"}
+              </h1>
+              <p style={{ color: "#666", fontSize: 14, margin: 0, lineHeight: 1.6 }}>
+                {method === "email"
+                  ? "we'll send you a one-time code to sign in"
+                  : "this is how people at the event will find you"}
+              </p>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ background: "#1a1a18", border: `1px solid ${usernameError ? "#ff6666" : username ? "#cafd0050" : "#1e1e1c"}`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, transition: "border-color 0.18s" }}>
-                <span style={{ color: "#aaa", fontSize: 18, fontWeight: 700 }}>@</span>
-                <input
-                  ref={usernameRef}
-                  value={username}
-                  onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setUsernameError(""); }}
-                  onKeyDown={e => e.key === "Enter" && handleUsernameSubmit()}
-                  placeholder="yourname"
-                  maxLength={20}
-                  style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700 }}
-                />
-                {username.length >= 2 && <span style={{ color: "#cafd00", fontSize: 16 }}>✓</span>}
+            {/* Method tabs */}
+            <div style={{ display: "flex", background: "#1a1a18", borderRadius: 12, padding: 4, marginBottom: 20 }}>
+              {(["email", "username"] as Method[]).map(m => (
+                <button key={m} onClick={() => { setMethod(m); setError(""); }} style={{
+                  flex: 1, padding: "9px", borderRadius: 9,
+                  background: method === m ? "#cafd00" : "transparent",
+                  border: "none", color: method === m ? "#1a2200" : "#555",
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontWeight: 700, fontSize: 12, cursor: "pointer",
+                  letterSpacing: 1, textTransform: "uppercase", transition: "all 0.18s",
+                }}>{m === "email" ? "✉ Email" : "@ Username"}</button>
+              ))}
+            </div>
+
+            {/* Email input */}
+            {method === "email" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ background: "#1a1a18", border: `1px solid ${error ? "#ff6666" : email.includes("@") ? "#cafd0050" : "#1e1e1c"}`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, transition: "border-color 0.18s" }}>
+                  <span style={{ color: "#555", fontSize: 16 }}>✉</span>
+                  <input
+                    ref={inputRef}
+                    type="email"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError(""); }}
+                    onKeyDown={e => e.key === "Enter" && handleSendOTP()}
+                    placeholder="you@example.com"
+                    style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600 }}
+                  />
+                  {email.includes("@") && <span style={{ color: "#cafd00" }}>✓</span>}
+                </div>
+                {error && <p style={{ color: "#ff6666", fontSize: 13, margin: "0 4px" }}>{error}</p>}
+                <button
+                  onClick={handleSendOTP}
+                  disabled={loading || !email.includes("@")}
+                  style={{ width: "100%", padding: "15px", borderRadius: 99, background: email.includes("@") ? "#cafd00" : "#141412", border: "none", color: email.includes("@") ? "#1a2200" : "#333", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: email.includes("@") ? "pointer" : "not-allowed", transition: "all 0.2s", boxShadow: email.includes("@") ? "0 0 24px rgba(202,253,0,0.18)" : "none" }}
+                >
+                  {loading ? "sending..." : "send code ⚡"}
+                </button>
               </div>
+            )}
 
-              {usernameError && (
-                <p style={{ color: "#ff6666", fontSize: 13, margin: "0 4px", animation: "fadeUp 0.2s ease" }}>{usernameError}</p>
-              )}
+            {/* Username input */}
+            {method === "username" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ background: "#1a1a18", border: `1px solid ${error ? "#ff6666" : username.length >= 2 ? "#cafd0050" : "#1e1e1c"}`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, transition: "border-color 0.18s" }}>
+                  <span style={{ color: "#aaa", fontSize: 18, fontWeight: 700 }}>@</span>
+                  <input
+                    ref={inputRef}
+                    value={username}
+                    onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setError(""); }}
+                    onKeyDown={e => e.key === "Enter" && handleUsernameSubmit()}
+                    placeholder="yourname"
+                    maxLength={20}
+                    style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700 }}
+                  />
+                  {username.length >= 2 && <span style={{ color: "#cafd00" }}>✓</span>}
+                </div>
+                <p style={{ color: "#555", fontSize: 12, margin: "0 4px" }}>letters, numbers, underscores only</p>
+                {error && <p style={{ color: "#ff6666", fontSize: 13, margin: "0 4px" }}>{error}</p>}
+                <button
+                  onClick={handleUsernameSubmit}
+                  disabled={loading || username.length < 2}
+                  style={{ width: "100%", padding: "15px", borderRadius: 99, background: username.length >= 2 ? "#cafd00" : "#141412", border: "none", color: username.length >= 2 ? "#1a2200" : "#333", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: username.length >= 2 ? "pointer" : "not-allowed", transition: "all 0.2s" }}
+                >
+                  {loading ? "one sec..." : "let's go ⚡"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-              <p style={{ color: "#999", fontSize: 13, margin: "0 4px" }}>letters, numbers, underscores. keep it simple.</p>
+        {/* ── OTP ENTRY ── */}
+        {step === "otp" && (
+          <div style={{ width: "100%", maxWidth: 420, animation: "fadeUp 0.4s ease" }}>
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#9d7bb820", border: "2px solid #9d7bb8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, margin: "0 auto 18px" }}>✉</div>
+              <h1 style={{ fontSize: 24, fontWeight: 900, margin: "0 0 10px", letterSpacing: -0.5 }}>check your email</h1>
+              <p style={{ color: "#666", fontSize: 14, margin: 0, lineHeight: 1.7 }}>
+                we sent a 6-digit code to<br />
+                <span style={{ color: "#fff", fontWeight: 700 }}>{sentTo}</span>
+              </p>
+            </div>
 
-              <button
-                onClick={handleUsernameSubmit}
-                disabled={loading || username.length < 2}
-                style={{ width: "100%", padding: "16px", borderRadius: 99, background: username.length >= 2 ? "#cafd00" : "#141412", border: "none", color: username.length >= 2 ? "#1a2200" : "#333", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: username.length >= 2 ? "pointer" : "not-allowed", transition: "all 0.2s", boxShadow: username.length >= 2 ? "0 0 24px rgba(202,253,0,0.18)" : "none" }}
-              >
-                {loading ? "one sec..." : "let's go ⚡"}
+            {/* 6-digit OTP boxes */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 20 }}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={el => { otpRefs.current[i] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={e => handleOtpChange(i, e.target.value)}
+                  onKeyDown={e => handleOtpKeyDown(i, e)}
+                  style={{
+                    width: 48, height: 58, textAlign: "center",
+                    background: digit ? "#cafd0015" : "#1a1a18",
+                    border: `2px solid ${digit ? "#cafd00" : "#2a2a28"}`,
+                    borderRadius: 12, color: "#cafd00",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: 24, fontWeight: 900,
+                    outline: "none", transition: "all 0.15s",
+                    caretColor: "#cafd00",
+                  }}
+                />
+              ))}
+            </div>
+
+            {error && <p style={{ color: "#ff6666", fontSize: 13, textAlign: "center", margin: "0 0 14px" }}>{error}</p>}
+
+            <button
+              onClick={handleVerifyOTP}
+              disabled={loading || otp.join("").length < 6}
+              style={{ width: "100%", padding: "15px", borderRadius: 99, background: otp.join("").length === 6 ? "#cafd00" : "#141412", border: "none", color: otp.join("").length === 6 ? "#1a2200" : "#333", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 15, cursor: otp.join("").length === 6 ? "pointer" : "not-allowed", transition: "all 0.2s", marginBottom: 16 }}
+            >
+              {loading ? "verifying..." : "verify ⚡"}
+            </button>
+
+            {/* Resend + change email */}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <button onClick={() => { setOtp(["","","","","",""]); setStep("input"); setError(""); }} style={{ background: "none", border: "none", color: "#444", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, cursor: "pointer", padding: 0 }}>
+                ← change email
+              </button>
+              <button onClick={handleSendOTP} disabled={loading} style={{ background: "none", border: "none", color: "#555", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, cursor: "pointer", padding: 0 }}>
+                resend code
               </button>
             </div>
           </div>
         )}
 
-        {/* DONE */}
+        {/* ── DONE ── */}
         {step === "done" && (
-          <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, animation: "fadeUp 0.5s ease" }}>
+          <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, animation: "fadeUp 0.5s ease" }}>
             <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#cafd0015", border: "2px solid #cafd00", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, boxShadow: "0 0 40px rgba(202,253,0,0.2)" }}>⚡</div>
             <div style={{ textAlign: "center" }}>
-              <h2 style={{ fontSize: 30, fontWeight: 900, margin: "0 0 10px", letterSpacing: -0.5 }}>you're in 🎉</h2>
-              <p style={{ color: "#cafd00", fontSize: 15, fontWeight: 700, margin: "0 0 6px" }}>@{username}</p>
-              <p style={{ color: "#bbb", fontSize: 14, margin: 0 }}>setting up your space...</p>
+              <h2 style={{ fontSize: 28, fontWeight: 900, margin: "0 0 8px", letterSpacing: -0.5 }}>you're in 🎉</h2>
+              <p style={{ color: "#bbb", fontSize: 14, margin: 0 }}>taking you there now...</p>
             </div>
           </div>
         )}
@@ -170,4 +350,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
