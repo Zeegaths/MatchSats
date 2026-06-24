@@ -13,9 +13,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "1%",
-  description: "At every event, 1% of the room will change your life. We find them.",
+  title: "1% — Find Your People",
+  description: "At every event, 1% of the room will change your life. AI matchmaking + Lightning escrow for conferences.",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "1% — Find Your People",
+    description: "At every event, 1% of the room will change your life. AI matchmaking + Lightning escrow for conferences.",
+    url: "https://1percent.one",
+    siteName: "1%",
+    images: [
+      {
+        url: "https://1percent.one/og-image.png",
+        width: 1024,
+        height: 1024,
+        alt: "1% MatchSats",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "1% — Find Your People",
+    description: "AI matchmaking + Lightning escrow for conferences.",
+    images: ["https://1percent.one/og-image.png"],
+  },
+  icons: {
+    icon: "/og-image.png",
+    apple: "/og-image.png",
+  },
 };
 
 export default function RootLayout({
