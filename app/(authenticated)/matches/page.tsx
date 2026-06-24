@@ -294,15 +294,10 @@ export default function MatchesPage() {
   useEffect(() => {
     async function loadMatches() {
       try {
-        // Check session for event code
         const meRes = await fetch("/api/auth/me");
         const me = await meRes.json();
         if (!me.loggedIn) { router.push("/"); return; }
-        if (!me.eventCode && !me.hasEventCode) {
-          setHasEventCode(false);
-          setLoading(false);
-          return;
-        }
+
         const res = await fetch("/api/match");
         if (!res.ok) {
           setLoading(false);
