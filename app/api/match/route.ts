@@ -7,6 +7,15 @@ export async function GET(request: NextRequest) {
   const { session, error } = await requireAuth(request);
   if (error) return error;
   const userId = session!.userId;
+
+  // Sync eventCode into session from profile if missing
+  if (!session!.eventCode) {
+    const saved = db.prepare(`SELECT invite_code FROM profiles WHERE pubkey = ?`).get(userId) as any;
+    if (saved?.invite_code) {
+      session!.eventCode = saved.invite_code;
+      await session!.save();
+    }
+  }
   const rows = db.prepare(`
     SELECT m.id, m.score, m.rationale, m.status, m.created_at,
       p.pubkey, p.name, p.role, p.location, p.core_vibe,
@@ -31,7 +40,17 @@ export async function POST(request: NextRequest) {
   const { session, error } = await requireAuth(request);
   if (error) return error;
   const userId = session!.userId;
-  const eventCode = session!.eventCode;
+
+  // If session has no eventCode, load it from the saved profile
+  let eventCode = session!.eventCode;
+  if (!eventCode) {
+    const saved = db.prepare(`SELECT invite_code FROM profiles WHERE pubkey = ?`).get(userId) as any;
+    if (saved?.invite_code) {
+      eventCode = saved.invite_code;
+      session!.eventCode = eventCode;
+      await session!.save();
+    }
+  }
   const myProfile = db.prepare(`SELECT * FROM profiles WHERE pubkey = ?`).get(userId) as any;
   if (!myProfile) {
     return NextResponse.json({ error: "Complete your profile first" }, { status: 400 });
