@@ -46,6 +46,158 @@ const SOULMATE_INTERESTS = [
 // keep INTERESTS as alias for bitcoin
 const INTERESTS = BITCOIN_INTERESTS;
 
+// ── Known events — add future events here ─────────────────────────────
+const KNOWN_EVENTS = [
+  {
+    code: "BNC2026",
+    name: "Bitcoin Nairobi Conference 2026",
+    location: "A.S.K. Dome, Nairobi",
+    date: "24–26 June 2026",
+    emoji: "🇰🇪",
+    active: true,
+  },
+  // Add more events here as needed:
+  // { code: "BTCCAMP27", name: "Bitcoin Camp 2027", location: "Kampala", date: "Jan 2027", emoji: "🇺🇬", active: false },
+];
+
+function EventPicker({ value, onChange }: { value: string; onChange: (code: string) => void }) {
+  const selected = KNOWN_EVENTS.find(e => e.code === value);
+  const [showManual, setShowManual] = useState(false);
+
+  return (
+    <div style={{
+      borderRadius: 20,
+      border: `1px solid ${value ? "#cafd0050" : "#cafd0020"}`,
+      background: value ? "#cafd0008" : "#0e0e0c",
+      padding: "20px",
+      marginBottom: 12,
+      transition: "all 0.2s",
+    }}>
+      <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: 3, margin: "0 0 6px" }}>YOUR EVENT</p>
+      <p style={{ color: "#777", fontSize: 13, margin: "0 0 14px", lineHeight: 1.6 }}>
+        Select the event you are attending — this scopes your matches to people in the same room.
+      </p>
+
+      {/* Event cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+        {KNOWN_EVENTS.map(ev => {
+          const isSelected = value === ev.code;
+          return (
+            <button
+              key={ev.code}
+              onClick={() => onChange(isSelected ? "" : ev.code)}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: 14,
+                border: isSelected ? "1px solid #cafd00" : "1px solid #1e1e1c",
+                background: isSelected ? "#cafd0012" : "#111110",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.18s",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = "#2a2a28"; }}
+              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = "#1e1e1c"; }}
+            >
+              {/* Flag / emoji */}
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{ev.emoji}</span>
+
+              {/* Details */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ color: isSelected ? "#cafd00" : "#fff", fontWeight: 700, fontSize: 14 }}>
+                    {ev.name}
+                  </span>
+                  {ev.active && (
+                    <span style={{
+                      background: "#cafd0015", border: "1px solid #cafd0040",
+                      color: "#cafd00", fontSize: 9, fontWeight: 700,
+                      padding: "2px 8px", borderRadius: 99, letterSpacing: 1,
+                    }}>LIVE</span>
+                  )}
+                </div>
+                <p style={{ color: "#555", fontSize: 12, margin: "2px 0 0" }}>
+                  {ev.location} · {ev.date}
+                </p>
+              </div>
+
+              {/* Selected indicator */}
+              <div style={{
+                width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                border: isSelected ? "none" : "1.5px solid #2a2a28",
+                background: isSelected ? "#cafd00" : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.18s",
+              }}>
+                {isSelected && <span style={{ color: "#1a2200", fontSize: 12, fontWeight: 900 }}>✓</span>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected code confirmation */}
+      {selected && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          background: "#080808", border: "1px solid #cafd0030",
+          borderRadius: 10, padding: "10px 14px",
+          marginBottom: 10,
+        }}>
+          <span style={{ color: "#cafd00", fontSize: 14 }}>🎟</span>
+          <span style={{ color: "#555", fontSize: 12, fontWeight: 600 }}>Event code:</span>
+          <span style={{ color: "#cafd00", fontWeight: 800, fontSize: 14, letterSpacing: 3 }}>{selected.code}</span>
+          <span style={{ color: "#cafd00", fontSize: 13, marginLeft: "auto" }}>✓</span>
+        </div>
+      )}
+
+      {/* Manual entry toggle */}
+      <button
+        onClick={() => setShowManual(v => !v)}
+        style={{
+          background: "none", border: "none", cursor: "pointer",
+          color: "#444", fontSize: 12, fontWeight: 600,
+          fontFamily: "'Space Grotesk', sans-serif",
+          padding: 0, letterSpacing: 0.5,
+          transition: "color 0.18s",
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = "#777"}
+        onMouseLeave={e => e.currentTarget.style.color = "#444"}
+      >
+        {showManual ? "▲ hide manual entry" : "▼ have a different code? enter it manually"}
+      </button>
+
+      {showManual && (
+        <div style={{
+          marginTop: 10,
+          display: "flex", alignItems: "center", gap: 10,
+          background: "#080808", border: `1px solid ${value && !selected ? "#cafd0040" : "#1e1e1c"}`,
+          borderRadius: 10, padding: "12px 16px",
+          transition: "all 0.2s",
+        }}>
+          <span style={{ color: "#cafd00", fontSize: 16 }}>🎟</span>
+          <input
+            value={selected ? "" : value}
+            onChange={e => onChange(e.target.value.toUpperCase())}
+            placeholder="TYPE CODE HERE"
+            maxLength={20}
+            style={{
+              flex: 1, background: "transparent", border: "none",
+              color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: 15, fontWeight: 800, outline: "none", letterSpacing: 3,
+            }}
+          />
+          {value && !selected && <span style={{ color: "#cafd00" }}>✓</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const CORE_VIBES = [
   { label: "Hyper-Focused", icon: "◎" },
   { label: "High Leverage", icon: "⚡" },
@@ -417,30 +569,9 @@ export default function ProfileSetupPage() {
           ))}
         </div>
 
-        {/* Conference invite code */}
-        <div style={{ borderRadius: 20, border: `1px solid ${inviteCode.length > 0 ? "#cafd0050" : "#cafd0020"}`, background: inviteCode.length > 0 ? "#cafd0008" : "#0e0e0c", padding: "20px", marginBottom: 12, transition: "all 0.2s" }}>
-          {sectionLabel("EVENT CODE")}
-          <p style={{ color: "#777", fontSize: 13, margin: "0 0 12px", lineHeight: 1.6 }}>
-            This scopes your matches to people at the same event. Ask your organizer if you don't have one.
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#080808", border: `1px solid ${inviteCode.length > 0 ? "#cafd0040" : "#1e1e1c"}`, borderRadius: 10, padding: "12px 16px", transition: "all 0.2s" }}>
-            <span style={{ color: "#cafd00", fontSize: 16 }}>🎟</span>
-            <input
-              value={inviteCode}
-              onChange={e => setInviteCode(e.target.value.toUpperCase())}
-              placeholder="e.g. NAI5"
-              maxLength={20}
-              style={{ flex: 1, background: "transparent", border: "none", color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 800, outline: "none", letterSpacing: 3 }} />
-            {inviteCode.length > 0 && (
-              <span style={{ color: "#cafd00", fontSize: 16 }}>✓</span>
-            )}
-          </div>
-          {inviteCode.length === 0 && (
-            <p style={{ color: "#555", fontSize: 11, margin: "8px 0 0" }}>
-              No code? You can still build your profile — add it later before matching.
-            </p>
-          )}
-        </div>
+        {/* Conference / Event picker */}
+        <EventPicker value={inviteCode} onChange={setInviteCode} />
+
 
       </div>
 

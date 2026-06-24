@@ -3,27 +3,10 @@ export const dynamic = "force-dynamic";
 // Verifies the wallet's signature and creates a session
 
 import { NextRequest, NextResponse } from "next/server";
-import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import db from "@/lib/db";
-
-export interface SessionData {
-  pubkey: string;        // hex pubkey — this IS the user's identity
-  npub: string;          // bech32 npub for Nostr
-  isLoggedIn: boolean;
-}
-
-const SESSION_OPTIONS = {
-  password: process.env.SESSION_SECRET ?? "changeme-at-least-32-chars-long!!",
-  cookieName: "matchsats_session",
-  cookieOptions: {
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    sameSite: "lax" as const,
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  },
-};
+import { SESSION_OPTIONS, type SessionData } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
   console.log("[callback] hit:", request.url);
@@ -63,11 +46,15 @@ export async function GET(request: NextRequest) {
   // 6. Encode npub (NIP-19)
   const npub = pubkeyToNpub(key);
 
-  // 7. Set session cookie
+  // 7. Set session cookie using shared SESSION_OPTIONS
   const session = await getIronSession<SessionData>(await cookies(), SESSION_OPTIONS);
   session.pubkey = key;
   session.npub = npub;
   session.isLoggedIn = true;
+  // userId must match pubkey so requireAuth works for LNURL-auth users
+  session.userId = key;
+  session.username = npub;
+  session.eventCode = "";
   await session.save();
 
   // 8. Wallet expects { status: "OK" }
