@@ -54,17 +54,23 @@ export default function LoginPage() {
     if (!email.includes("@")) { setError("enter a valid email"); return; }
     setLoading(true);
     setError("");
-    const res = await fetch("/api/auth/email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) { setError(data.error ?? "couldn't send email, try again"); return; }
-    setSentTo(email);
-    setStep("otp");
-    setTimeout(() => otpRefs.current[0]?.focus(), 100);
+    try {
+      const res = await fetch("/api/auth/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) { setError(data.error ?? "couldn't send email — check your connection"); return; }
+      setSentTo(email);
+      setStep("otp");
+      setTimeout(() => otpRefs.current[0]?.focus(), 100);
+    } catch {
+      setError("couldn't send email — try again");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ── Verify OTP ────────────────────────────────────────────────────
@@ -73,16 +79,22 @@ export default function LoginPage() {
     if (code.length < 6) { setError("enter the full 6-digit code"); return; }
     setLoading(true);
     setError("");
-    const res = await fetch("/api/auth/email/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: sentTo, code }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) { setError(data.error ?? "invalid code, try again"); return; }
-    setStep("done");
-    setTimeout(() => router.push(data.hasProfile ? "/matches" : "/profile"), 1200);
+    try {
+      const res = await fetch("/api/auth/email/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: sentTo, code }),
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) { setError(data.error ?? "invalid code, try again"); return; }
+      setStep("done");
+      setTimeout(() => router.push(data.hasProfile ? "/matches" : "/profile"), 1200);
+    } catch {
+      setError("something went wrong, try again");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ── OTP input handling ────────────────────────────────────────────
@@ -104,16 +116,22 @@ export default function LoginPage() {
   const handleVerifyOTPDirect = async (code: string) => {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/auth/email/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: sentTo, code }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) { setError(data.error ?? "invalid code"); return; }
-    setStep("done");
-    setTimeout(() => router.push(data.hasProfile ? "/matches" : "/profile"), 1200);
+    try {
+      const res = await fetch("/api/auth/email/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: sentTo, code }),
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) { setError(data.error ?? "invalid code"); return; }
+      setStep("done");
+      setTimeout(() => router.push(data.hasProfile ? "/matches" : "/profile"), 1200);
+    } catch {
+      setError("something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOtpKeyDown = (i: number, e: React.KeyboardEvent) => {
