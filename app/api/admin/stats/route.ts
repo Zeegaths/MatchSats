@@ -44,6 +44,14 @@ export async function GET(request: NextRequest) {
     LIMIT 50
   `).all();
 
+  // Seed profiles (for visibility)
+  const seedProfiles = db.prepare(`
+    SELECT p.pubkey, p.name, p.role, p.location, p.invite_code, p.building
+    FROM profiles p
+    WHERE p.pubkey LIKE 'bnc_%' OR p.pubkey LIKE 'seed_%'
+    ORDER BY p.name ASC
+  `).all();
+
   // ── Matches ──────────────────────────────────────────────────────────
   const totalMatches = (db.prepare(`SELECT COUNT(*) as n FROM matches`).get() as any).n;
   const lockedMatches = (db.prepare(
@@ -88,6 +96,7 @@ export async function GET(request: NextRequest) {
     },
     byEventCode,
     recentSignups,
+    seedProfiles,
     recentMatches,
     escrow: { total: totalEscrow, held: heldEscrow },
   });

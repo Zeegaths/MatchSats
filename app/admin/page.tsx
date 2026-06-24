@@ -26,6 +26,14 @@ interface Stats {
     building: string | null;
     needs: string | null;
   }[];
+  seedProfiles: {
+    pubkey: string;
+    name: string | null;
+    role: string | null;
+    location: string | null;
+    invite_code: string | null;
+    building: string | null;
+  }[];
   recentMatches: {
     id: number;
     score: number;
@@ -80,7 +88,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [tab, setTab] = useState<"signups" | "matches" | "escrow">("signups");
+  const [tab, setTab] = useState<"signups" | "matches" | "escrow" | "seed">("signups");
+  const [seeding, setSeeding] = useState(false);
+  const [seedMsg, setSeedMsg] = useState("");
 
   const fetchStats = useCallback(async (s: string) => {
     setLoading(true);
@@ -158,7 +168,24 @@ export default function AdminPage() {
     );
   }
 
-  if (loading && !stats) {
+  const reSeed = async () => {
+    setSeeding(true);
+    setSeedMsg("");
+    try {
+      const res = await fetch(`/api/admin/seed?secret=${encodeURIComponent(secret)}`);
+      const data = await res.json();
+      if (data.success) {
+        setSeedMsg(`✓ Seeded ${data.seeded} profiles under event code ${data.event_code}`);
+        fetchStats(secret);
+      } else {
+        setSeedMsg(`Error: ${data.error}`);
+      }
+    } catch {
+      setSeedMsg("Network error");
+    } finally {
+      setSeeding(false);
+    }
+  };
     return (
       <main style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ color: "#cafd00", fontFamily: "'Space Grotesk', sans-serif", fontSize: 14 }}>Loading...</div>
@@ -253,8 +280,8 @@ export default function AdminPage() {
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-          {(["signups", "matches", "escrow"] as const).map(t => (
+        <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+          {(["signups", "matches", "escrow", "seed"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: "8px 18px", borderRadius: 99,
               background: tab === t ? "#cafd00" : "transparent",
@@ -263,7 +290,7 @@ export default function AdminPage() {
               fontFamily: "'Space Grotesk', sans-serif",
               fontWeight: 700, fontSize: 12, cursor: "pointer",
               letterSpacing: 1, textTransform: "uppercase",
-            }}>{t}</button>
+            }}>{t === "seed" ? "🌱 seed profiles" : t}</button>
           ))}
         </div>
 
@@ -390,6 +417,60 @@ export default function AdminPage() {
               <p style={{ color: "#444", fontSize: 12, margin: "6px 0 0" }}>
                 across {escrow.held} paid invoices · {summary.confirmedMeetings} meetings confirmed
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* SEED TAB */}
+        {tab === "seed" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ borderRadius: 16, border: "1px solid #cafd0030", background: "#cafd0008", padding: "20px 24px" }}>
+              <p style={{ color: "#555", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: "0 0 6px" }}>SEED PROFILES</p>
+              <p style={{ color: "#777", fontSize: 13, margin: "0 0 16px", lineHeight: 1.6 }}>
+                Seeds all 50 BNC 2026 profiles under event code <span style={{ color: "#cafd00", fontWeight: 700 }}>NAI5</span>. Safe to run multiple times.
+              </p>
+              <button onClick={reSeed} disabled={seeding} style={{
+                padding: "12px 24px", borderRadius: 99,
+                background: seeding ? "transparent" : "#cafd00",
+                border: seeding ? "1px solid #cafd0040" : "none",
+                color: seeding ? "#cafd00" : "#1a2200",
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 800, fontSize: 13, cursor: seeding ? "default" : "pointer",
+              }}>
+                {seeding ? "seeding..." : "🌱 Run Seed Now"}
+              </button>
+              {seedMsg && (
+                <p style={{ color: seedMsg.startsWith("✓") ? "#cafd00" : "#ff6666", fontSize: 13, margin: "12px 0 0", fontWeight: 600 }}>
+                  {seedMsg}
+                </p>
+              )}
+            </div>
+            <div style={{ borderRadius: 16, border: "1px solid #1e1e1c", background: "#111110", overflow: "hidden" }}>
+              <div style={{ padding: "14px 20px", borderBottom: "1px solid #1e1e1c", display: "flex", justifyContent: "space-between" }}>
+                <p style={{ color: "#555", fontSize: 10, fontWeight: 700, letterSpacing: 2, margin: 0 }}>SEEDED PROFILES IN DATABASE</p>
+                <span style={{ color: "#333", fontSize: 11 }}>{stats.seedProfiles.length} profiles</span>
+              </div>
+              {stats.seedProfiles.length === 0 ? (
+                <p style={{ color: "#444", fontSize: 14, padding: "24px 20px", margin: 0 }}>No seed profiles yet — click Run Seed Now above.</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 1, background: "#0e0e0c" }}>
+                  {stats.seedProfiles.map(p => (
+                    <div key={p.pubkey} style={{ padding: "12px 16px", background: "#111110", display: "flex", gap: 10, alignItems: "center" }}>
+                      <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, background: "#9d7bb820", border: "1px solid #9d7bb840", display: "flex", alignItems: "center", justifyContent: "center", color: "#9d7bb8", fontWeight: 800, fontSize: 12 }}>
+                        {(p.name ?? "?")[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>{p.name}</span>
+                          <span style={{ color: "#555", fontSize: 11 }}>{p.role}</span>
+                          {p.invite_code && <span style={{ background: "#cafd0010", color: "#cafd00", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 99 }}>{p.invite_code}</span>}
+                        </div>
+                        <p style={{ color: "#444", fontSize: 11, margin: 0 }}>{p.location}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
