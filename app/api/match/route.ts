@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
   }
   const myProfile = db.prepare(`SELECT * FROM profiles WHERE pubkey = ?`).get(userId) as any;
   if (!myProfile) {
+    console.log(`[match] no profile for userId: ${userId}`);
+    return NextResponse.json({ error: "Complete your profile first" }, { status: 400 });
+  }
+  if (!myProfile.name && !myProfile.building && !myProfile.role) {
+    console.log(`[match] empty profile for userId: ${userId}`);
     return NextResponse.json({ error: "Complete your profile first" }, { status: 400 });
   }
   const alreadyMatched = db.prepare(`

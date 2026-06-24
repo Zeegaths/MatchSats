@@ -333,11 +333,18 @@ export default function MatchesPage() {
   }, []);
 
   // Run AI matching
+  const [matchError, setMatchError] = useState("");
+
   async function runMatching() {
     setMatching(true);
+    setMatchError("");
     try {
       const res = await fetch("/api/match", { method: "POST" });
       const data = await res.json();
+      if (!res.ok) {
+        setMatchError(data.error ?? "Matching failed");
+        return;
+      }
       if (data.matches?.length > 0) {
         setMatches(prev => {
           const newOnes = data.matches.map((m: any) => ({
@@ -353,12 +360,14 @@ export default function MatchesPage() {
             matchScore: m.score,
             timer: null,
           }));
-          // Merge — avoid duplicates
           const existingIds = new Set(prev.map(m => String(m.id)));
           return [...prev, ...newOnes.filter((m: any) => !existingIds.has(String(m.id)))];
         });
+      } else {
+        setMatchError(data.message ?? "No matches found yet — make sure your profile is complete.");
       }
     } catch (err) {
+      setMatchError("Something went wrong. Try again.");
       console.error("Matching failed:", err);
     } finally {
       setMatching(false);
@@ -489,6 +498,13 @@ export default function MatchesPage() {
           }}>
             {matching ? "FINDING YOUR PEOPLE..." : "⚡ FIND MY MATCHES"}
           </button>
+          {matchError && (
+            <p style={{ color: matchError.startsWith("No matches") ? "#555" : "#ff6666", fontSize: 13, margin: "8px 0 0", maxWidth: 320 }}>
+              {matchError === "Complete your profile first"
+                ? <>Complete your profile first — <span style={{ color: "#cafd00", cursor: "pointer", textDecoration: "underline" }} onClick={() => router.push("/profile")}>go to profile →</span></>
+                : matchError}
+            </p>
+          )}
         </div>
 
         {/* Stat pills — 2x2 grid on mobile */}
