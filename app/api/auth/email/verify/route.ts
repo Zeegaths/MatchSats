@@ -45,7 +45,10 @@ export async function POST(request: NextRequest) {
     const userId = clean.replace(/[^a-z0-9]/g, "").slice(0, 20) || "user";
     const now = Date.now();
 
-    // Upsert user
+    // Ensure email column exists on users (safe migration)
+    try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
+
+    // Upsert user FIRST — profiles has FK constraint to users
     db.prepare(`
       INSERT INTO users (pubkey, email, created_at, last_seen)
       VALUES (?, ?, ?, ?)
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
         last_seen = excluded.last_seen
     `).run(userId, clean, now, now);
 
-    // Upsert profile
+    // Now upsert profile safely
     db.prepare(`
       INSERT INTO profiles (pubkey, name, updated_at)
       VALUES (?, ?, ?)

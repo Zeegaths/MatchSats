@@ -11,6 +11,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, core_vibe, role, building, needs, vibe, invite_code, interests, personality, soulmate_interests } = body;
     const now = Date.now();
+
+    // Ensure user row exists before profile save (FK safety)
+    db.prepare(`
+      INSERT INTO users (pubkey, created_at, last_seen)
+      VALUES (?, ?, ?)
+      ON CONFLICT(pubkey) DO UPDATE SET last_seen = excluded.last_seen
+    `).run(userId, now, now);
+
     db.prepare(`
       INSERT INTO profiles (pubkey, name, core_vibe, role, building, needs, vibe, invite_code, interests, personality, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
