@@ -49,15 +49,13 @@ const INTERESTS = BITCOIN_INTERESTS;
 // ── Known events — add future events here ─────────────────────────────
 const KNOWN_EVENTS = [
   {
-    code: "BNC2026",
+    code: "NAI5",
     name: "Bitcoin Nairobi Conference 2026",
     location: "A.S.K. Dome, Nairobi",
     date: "24–26 June 2026",
     emoji: "🇰🇪",
     active: true,
   },
-  // Add more events here as needed:
-  // { code: "BTCCAMP27", name: "Bitcoin Camp 2027", location: "Kampala", date: "Jan 2027", emoji: "🇺🇬", active: false },
 ];
 
 function EventPicker({ value, onChange }: { value: string; onChange: (code: string) => void }) {
