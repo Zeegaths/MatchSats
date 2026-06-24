@@ -22,9 +22,27 @@ export async function GET(request: NextRequest) {
   // Check tables
   const tables = (db.prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`).all() as any[]).map(r => r.name);
 
+  // Force create email_otps if missing
+  try {
+    db.exec(`CREATE TABLE IF NOT EXISTS email_otps (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL,
+      code TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    )`);
+  } catch {}
+
+  // Also ensure email column on users
+  try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
+
+  // Re-check tables after migration
+  const tablesAfter = (db.prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`).all() as any[]).map(r => r.name);
+
   // Check email_otps specifically
   let otpCount = 0;
   try { otpCount = (db.prepare(`SELECT COUNT(*) as n FROM email_otps`).get() as any).n; } catch {}
 
-  return NextResponse.json({ env, tables, otpCount });
+  return NextResponse.json({ env, tables, tablesAfter, otpCount });
 }
