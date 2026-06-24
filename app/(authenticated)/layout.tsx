@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import NotificationProvider from "@/components/NotificationProvider";
 
 export default async function AuthenticatedLayout({
   children,
@@ -12,5 +13,5 @@ export default async function AuthenticatedLayout({
     redirect("/login");
   }
 
-  return <>{children}</>;
+  return <NotificationProvider>{children}</NotificationProvider>;
 }
