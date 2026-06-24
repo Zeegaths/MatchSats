@@ -29,11 +29,20 @@ export async function getSession() {
 
 export async function requireAuth(request: NextRequest) {
   const session = await getSession();
-  if (!session.isLoggedIn || !session.userId) {
+  // Support both username sessions (userId) and LNURL sessions (pubkey)
+  const id = session.userId || session.pubkey;
+  if (!session.isLoggedIn || !id) {
     return {
       session: null,
       error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
+  }
+  // Ensure userId is always set so downstream routes work uniformly
+  if (!session.userId && session.pubkey) {
+    session.userId = session.pubkey;
+    session.username = session.npub ?? session.pubkey;
+    session.eventCode = session.eventCode ?? "";
+    await session.save();
   }
   return { session, error: null };
 }

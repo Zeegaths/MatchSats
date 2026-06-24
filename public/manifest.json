@@ -1,0 +1,17 @@
+{
+  "name": "MatchSats — 1%",
+  "short_name": "1%",
+  "description": "At every event, 1% of the room will change your life. We find them.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#cafd00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
