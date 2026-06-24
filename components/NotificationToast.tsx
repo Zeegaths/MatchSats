@@ -68,7 +68,7 @@ export default function NotificationToast() {
         if (update.status === "locked_a" || update.status === "locked_b") {
           addToast({
             type: "locked",
-            title: `${update.other_name} locked their sats ⚡`,
+            title: `${update.other_name} locked the match ⚡`,
             body: "Lock yours to confirm the meeting.",
             matchId: update.id,
             createdAt: update.updated_at,
@@ -76,7 +76,7 @@ export default function NotificationToast() {
         } else if (update.status === "both_locked") {
           addToast({
             type: "both_locked",
-            title: "Both sats locked 🔒",
+            title: "Match locked by both 🔒",
             body: `You and ${update.other_name} are committed. Go meet!`,
             matchId: update.id,
             createdAt: update.updated_at,

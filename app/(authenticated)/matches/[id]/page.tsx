@@ -233,7 +233,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         {lockStep === "invoice" && (
           <div style={{ borderRadius: 20, border: "1px solid #cafd0030", background: "#111110", padding: "24px", marginBottom: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, animation: "slideUp 0.3s ease" }}>
             {isGuest && <span style={{ background: "#cafd0015", border: "1px solid #cafd0040", color: "#cafd00", fontSize: 10, fontWeight: 700, padding: "4px 12px", borderRadius: 99, letterSpacing: 2 }}>DEMO MODE</span>}
-            <p style={{ color: "#cafd00", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: 0 }}>SCAN TO LOCK 2,100 SATS</p>
+            <p style={{ color: "#cafd00", fontSize: 11, fontWeight: 700, letterSpacing: 2, margin: 0 }}>SCAN TO LOCK MATCH</p>
             <InvoiceQR paymentRequest={paymentRequest} />
             {/* Pay with Alby if available */}
             {typeof window !== "undefined" && (window as any).webln && (
@@ -271,9 +271,9 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         {lockStep === "locked" && (
           <div style={{ borderRadius: 20, border: "1px solid #cafd0040", background: "#cafd0008", padding: "20px", marginBottom: 12, textAlign: "center", animation: "slideUp 0.3s ease" }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>⚡</div>
-            <p style={{ color: "#cafd00", fontWeight: 800, fontSize: 16, margin: "0 0 4px" }}>Sats locked!</p>
+            <p style={{ color: "#cafd00", fontWeight: 800, fontSize: 16, margin: "0 0 4px" }}>Match locked!</p>
             <p style={{ color: "#888", fontSize: 13, margin: 0 }}>
-              {match.escrow.both_locked ? "Both sides locked — you're committed. Go meet!" : "Waiting for them to lock their sats..."}
+              {match.escrow.both_locked ? "Both sides locked — you're committed. Go meet!" : "Waiting for them to lock the match..."}
             </p>
           </div>
         )}
@@ -295,7 +295,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
             <button onClick={handleLockSats} style={{ flex: 1, padding: "14px", borderRadius: 99, background: "#cafd00", border: "none", color: "#1a2200", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 1.5, boxShadow: "0 0 28px rgba(202,253,0,0.3)", transition: "opacity 0.18s" }}
               onMouseEnter={e => (e.currentTarget.style.opacity = "0.88")}
               onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-            >LOCK SATS ⚡</button>
+            >LOCK MATCH ⚡</button>
           )}
 
           {lockStep === "creating" && (
